@@ -3,8 +3,7 @@
 // http://opensource.org/licenses/mit-license.phpusing
 
 #if SAFULLBODYIK_DEBUG
-//#define SAFULLBODYIK_DEBUG_CONSTRUCT_TIME
-#define SAFULLBODYIK_DEBUG_LOCKTRANSFORM
+#define SAFULLBODYIK_DEBUG_CONSTRUCT_TIME
 #endif
 
 using UnityEngine;
@@ -12,161 +11,19 @@ using System.Collections.Generic;
 
 namespace SA
 {
-	[ExecuteInEditMode]
-	public partial class FullBodyIK : MonoBehaviour
+	[System.Serializable]
+	public partial class FullBodyIK
 	{
-#if SAFULLBODYIK_DEBUG
-		public enum DebugValueType
-		{
-			Int,
-			Float,
-			Bool,
-		}
-		
-		public class DebugValue
-		{
-			public DebugValueType valueType;
-			
-			public int intValue;
-			public float floatValue;
-			public bool boolValue;
-
-			public DebugValue( int i )
-			{
-				this.valueType = DebugValueType.Int;
-				this.intValue = i;
-				this.floatValue = (float)i;
-				this.boolValue = (i != 0);
-			}
-
-			public DebugValue( float f )
-			{
-				this.valueType = DebugValueType.Float;
-				this.intValue = (int)f;
-				this.floatValue = f;
-				this.boolValue = (f != 0.0f);
-			}
-
-			public DebugValue( bool b )
-			{
-				this.valueType = DebugValueType.Bool;
-				this.intValue = b ? 1 : 0;
-				this.floatValue = b ? 1.0f : 0.0f;
-				this.boolValue = b;
-			}
-			
-			public static implicit operator DebugValue( int i ) { return new DebugValue( i ); }
-			public static implicit operator int( DebugValue v ) { return v.intValue; }
-			public static implicit operator DebugValue( float f ) { return new DebugValue( f ); }
-			public static implicit operator float( DebugValue v ) { return v.floatValue; }
-			public static implicit operator DebugValue( bool b ) { return new DebugValue( b ); }
-			public static implicit operator bool( DebugValue v ) { return v.boolValue; }
-		}
-
-		public struct DebugPoint
-		{
-			public Vector3 pos;
-			public Color color;
-			public float size;
-
-			public DebugPoint( Vector3 pos )
-			{
-				this.pos = pos;
-				this.color = Color.red;
-				this.size = 0.03f;
-			}
-
-			public DebugPoint( Vector3 pos, Color color )
-			{
-				this.pos = pos;
-				this.color = color;
-				this.size = 0.03f;
-			}
-
-			public DebugPoint( Vector3 pos, Color color, float size )
-			{
-				this.pos = pos;
-				this.color = color;
-				this.size = size;
-			}
-		}
-
-		public class DebugData
-		{
-			public Dictionary<string, DebugValue> debugValues = new Dictionary<string, DebugValue>();
-			public List<DebugPoint> debugPoints = new List<DebugPoint>();
-
-			public void AddPoint( Vector3 pos )
-			{
-				this.debugPoints.Add( new DebugPoint( pos ) );
-			}
-
-			public void AddPoint( Vector3 pos, Color color )
-			{
-				this.debugPoints.Add( new DebugPoint( pos, color ) );
-			}
-
-			public void AddPoint( Vector3 pos, Color color, float size )
-			{
-				this.debugPoints.Add( new DebugPoint( pos, color, size ) );
-			}
-
-			public void UpdateValue( string name, ref int v )
-			{
-				DebugValue debugValue;
-				if( this.debugValues.TryGetValue( name, out debugValue ) ) {
-					v = debugValue;
-					return;
-				}
-
-				this.debugValues.Add( name, v );
-			}
-
-			public void UpdateValue( string name, ref float v )
-			{
-				DebugValue debugValue;
-				if( this.debugValues.TryGetValue( name, out debugValue ) ) {
-					v = debugValue;
-					return;
-				}
-
-				this.debugValues.Add( name, v );
-			}
-
-			public void UpdateValue( string name, ref bool v )
-			{
-				DebugValue debugValue;
-				if( this.debugValues.TryGetValue( name, out debugValue ) ) {
-					v = debugValue;
-					return;
-				}
-
-				this.debugValues.Add( name, v );
-			}
-		}
-
-		[System.NonSerialized]
-		public DebugData _debugData = new DebugData();
-#if SAFULLBODYIK_DEBUG_LOCKTRANSFORM
-		public Vector3 _debug_currentPosition = Vector3.zero;
-#endif
-#endif
-		
 		[System.Serializable]
 		public class BodyBones
 		{
-			public Bone pelvis;
-			public Bone torso;
-			public Bone torso2;
+			public Bone hips;
+			public Bone spine;
+			public Bone spine2;
+			public Bone spine3;
+			public Bone spine4;
 
-			public static BodyBones Preset()
-			{
-				BodyBones bones = new BodyBones();
-				bones.pelvis = Bone.Preset( BoneLocation.Pelvis );
-				bones.torso = Bone.Preset( BoneLocation.Torso );
-				bones.torso2 = Bone.Preset( BoneLocation.Torso2 );
-				return bones;
-			}
+			public Bone spineU { get { return spine4; } }
 		}
 
 		[System.Serializable]
@@ -176,16 +33,6 @@ namespace SA
 			public Bone head;
 			public Bone leftEye;
 			public Bone rightEye;
-
-			public static HeadBones Preset()
-			{
-				HeadBones bones = new HeadBones();
-				bones.neck = Bone.Preset( BoneLocation.Neck );
-				bones.head = Bone.Preset( BoneLocation.Head );
-				bones.leftEye = Bone.Preset( BoneLocation.LeftEye );
-				bones.rightEye = Bone.Preset( BoneLocation.RightEye );
-				return bones;
-			}
 		}
 
 		[System.Serializable]
@@ -194,15 +41,6 @@ namespace SA
 			public Bone leg;
 			public Bone knee;
 			public Bone foot;
-
-			public static LegBones Preset( Side side )
-			{
-				LegBones bones = new LegBones();
-				bones.leg = Bone.Preset( (side == Side.Left) ? BoneLocation.LeftLeg : BoneLocation.RightLeg );
-				bones.knee = Bone.Preset( (side == Side.Left) ? BoneLocation.LeftKnee : BoneLocation.RightKnee );
-				bones.foot = Bone.Preset( (side == Side.Left) ? BoneLocation.LeftFoot : BoneLocation.RightFoot );
-				return bones;
-			}
 		}
 
 		[System.Serializable]
@@ -210,43 +48,15 @@ namespace SA
 		{
 			public Bone shoulder;
 			public Bone arm;
-			public Bone[] armTwist;
+			public Bone[] armRoll;
 			public Bone elbow;
-			public Bone[] handTwist;
+			public Bone[] elbowRoll;
 			public Bone wrist;
 
-			public static ArmBones Preset( Side side )
+			public void Repair()
 			{
-				ArmBones bones = new ArmBones();
-				bones.Repair( side );
-                bones.shoulder = Bone.Preset( (side == Side.Left) ? BoneLocation.LeftShoulder : BoneLocation.RightShoulder );
-				bones.arm = Bone.Preset( (side == Side.Left) ? BoneLocation.LeftArm : BoneLocation.RightArm );
-				bones.elbow = Bone.Preset( (side == Side.Left) ? BoneLocation.LeftElbow : BoneLocation.RightElbow );
-				bones.wrist = Bone.Preset( (side == Side.Left) ? BoneLocation.LeftWrist : BoneLocation.RightWrist );
-
-				BoneLocation armTwistLocation = ((side == Side.Left) ? BoneLocation.LeftArmTwist0 : BoneLocation.RightArmTwist0);
-				BoneLocation handTwistLocation = ((side == Side.Left) ? BoneLocation.LeftHandTwist0 : BoneLocation.RightHandTwist0);
-				for( int i = 0; i < MaxArmTwistLength; ++i ) {
-					bones.armTwist[i] = Bone.Preset( (BoneLocation)(armTwistLocation + i) );
-				}
-				for( int i = 0; i < MaxHandTwistLength; ++i ) {
-					bones.handTwist[i] = Bone.Preset( (BoneLocation)(handTwistLocation + i) );
-				}
-
-				return bones;
-			}
-
-			public void Repair( Side side )
-			{
-				_Repair( ref armTwist, MaxArmTwistLength );
-				_Repair( ref handTwist, MaxHandTwistLength );
-			}
-
-			static void _Repair( ref Bone[] bones, int length )
-			{
-				if( bones == null || bones.Length != length ) {
-					System.Array.Resize( ref bones, length );
-				}
+				SafeResize( ref armRoll, MaxArmRollLength );
+				SafeResize( ref elbowRoll, MaxElbowRollLength );
 			}
 		}
 
@@ -259,71 +69,29 @@ namespace SA
 			public Bone[] ring;
 			public Bone[] little;
 
-			public static FingersBones Preset( Side side )
+			public void Repair()
 			{
-				FingersBones bones = new FingersBones();
-				bones.Repair( side );
-				BoneLocation thumbLocation = ((side == Side.Left) ? BoneLocation.LeftHandThumb0 : BoneLocation.RightHandThumb0);
-				BoneLocation indexLocation = ((side == Side.Left) ? BoneLocation.LeftHandIndex0 : BoneLocation.RightHandIndex0);
-				BoneLocation middleLocation = ((side == Side.Left) ? BoneLocation.LeftHandMiddle0 : BoneLocation.RightHandMiddle0);
-				BoneLocation ringLocation = ((side == Side.Left) ? BoneLocation.LeftHandRing0 : BoneLocation.RightHandRing0);
-				BoneLocation littleLocation = ((side == Side.Left) ? BoneLocation.LeftHandLittle0 : BoneLocation.RightHandLittle0);
-				for( int i = 0; i < MaxHandFingerLength; ++i ) {
-					bones.thumb[i] = Bone.Preset( (BoneLocation)(thumbLocation + i) );
-					bones.index[i] = Bone.Preset( (BoneLocation)(indexLocation + i) );
-					bones.middle[i] = Bone.Preset( (BoneLocation)(middleLocation + i) );
-					bones.ring[i] = Bone.Preset( (BoneLocation)(ringLocation + i) );
-					bones.little[i] = Bone.Preset( (BoneLocation)(littleLocation + i) );
-				}
-				return bones;
-			}
-
-			public void Repair( Side side )
-			{
-				_Repair( ref thumb, MaxHandFingerLength );
-				_Repair( ref index, MaxHandFingerLength );
-				_Repair( ref middle, MaxHandFingerLength );
-				_Repair( ref ring, MaxHandFingerLength );
-				_Repair( ref little, MaxHandFingerLength );
+				SafeResize( ref thumb, MaxHandFingerLength );
+				SafeResize( ref index, MaxHandFingerLength );
+				SafeResize( ref middle, MaxHandFingerLength );
+				SafeResize( ref ring, MaxHandFingerLength );
+				SafeResize( ref little, MaxHandFingerLength );
 				// Memo: Don't alloc each bone instances.( Alloc in _Prefix() ).
 			}
-
-			static void _Repair( ref Bone[] bones, int length )
-			{
-				if( bones == null || bones.Length != length ) {
-					System.Array.Resize( ref bones, length );
-				}
-			}
 		}
-		
+
 		[System.Serializable]
 		public class BodyEffectors
 		{
-			public Effector pelvis;
-			
-			public static BodyEffectors Preset()
-			{
-				BodyEffectors effectors = new BodyEffectors();
-				effectors.pelvis = Effector.Preset( EffectorLocation.Pelvis );
-				return effectors;
-			}
+			public Effector hips;
 		}
-		
+
 		[System.Serializable]
 		public class HeadEffectors
 		{
 			public Effector neck;
 			public Effector head;
 			public Effector eyes;
-			
-			public static HeadEffectors Preset()
-			{
-				HeadEffectors effectors = new HeadEffectors();
-				effectors.neck = Effector.Preset( EffectorLocation.Neck );
-				effectors.head = Effector.Preset( EffectorLocation.Head );
-				effectors.eyes = Effector.Preset( EffectorLocation.Eyes );
-				return effectors;
-			}
 		}
 
 		[System.Serializable]
@@ -331,14 +99,6 @@ namespace SA
 		{
 			public Effector knee;
 			public Effector foot;
-			
-			public static LegEffectors Preset( Side side )
-			{
-				LegEffectors effectors = new LegEffectors();
-				effectors.knee = Effector.Preset( (side == Side.Left) ? EffectorLocation.LeftKnee : EffectorLocation.RightKnee );
-				effectors.foot = Effector.Preset( (side == Side.Left) ? EffectorLocation.LeftFoot : EffectorLocation.RightFoot );
-				return effectors;
-			}
 		}
 
 		[System.Serializable]
@@ -347,15 +107,6 @@ namespace SA
 			public Effector arm;
 			public Effector elbow;
 			public Effector wrist;
-			
-			public static ArmEffectors Preset( Side side )
-			{
-				ArmEffectors effectors = new ArmEffectors();
-				effectors.arm = Effector.Preset( (side == Side.Left) ? EffectorLocation.LeftArm : EffectorLocation.RightArm );
-				effectors.elbow = Effector.Preset( (side == Side.Left) ? EffectorLocation.LeftElbow : EffectorLocation.RightElbow );
-				effectors.wrist = Effector.Preset( (side == Side.Left) ? EffectorLocation.LeftWrist : EffectorLocation.RightWrist );
-				return effectors;
-			}
 		}
 
 		[System.Serializable]
@@ -366,17 +117,6 @@ namespace SA
 			public Effector middle;
 			public Effector ring;
 			public Effector little;
-			
-			public static FingersEffectors Preset( Side side )
-			{
-				FingersEffectors effectors = new FingersEffectors();
-				effectors.thumb = Effector.Preset( (side == Side.Left) ? EffectorLocation.LeftHandThumb : EffectorLocation.RightHandThumb );
-				effectors.index = Effector.Preset( (side == Side.Left) ? EffectorLocation.LeftHandIndex : EffectorLocation.RightHandIndex );
-				effectors.middle = Effector.Preset( (side == Side.Left) ? EffectorLocation.LeftHandMiddle : EffectorLocation.RightHandMiddle );
-				effectors.ring = Effector.Preset( (side == Side.Left) ? EffectorLocation.LeftHandRing : EffectorLocation.RightHandRing );
-				effectors.little = Effector.Preset( (side == Side.Left) ? EffectorLocation.LeftHandLittle : EffectorLocation.RightHandLittle );
-				return effectors;
-			}
 		}
 
 		public enum AutomaticBool
@@ -386,56 +126,163 @@ namespace SA
 			Enable = 1,
 		}
 
+		public enum SyncDisplacement
+		{
+			Disable,
+			Firstframe,
+			Everyframe,
+		}
+
 		[System.Serializable]
 		public class Settings
 		{
 			public AutomaticBool animatorEnabled = AutomaticBool.Auto;
 			public AutomaticBool resetTransforms = AutomaticBool.Auto;
+			public SyncDisplacement syncDisplacement = SyncDisplacement.Disable;
 
-			public bool automaticConfigureTwistEnabled = false;
+			public bool automaticPrepareHumanoid = true;
+			public bool automaticConfigureSpineEnabled = false;
+
+			public bool automaticConfigureRollEnabled = false;
+			public bool rollEnabled = false;
+
 			public bool createEffectorTransform = true;
 
 			public ModelTemplate modelTemplate = ModelTemplate.Standard;
 
+			[System.Serializable]
 			public class BodyIK
 			{
+				public bool lowerSolveEnabled = true;
+				public bool upperSolveEnabled = true;
+				public bool computeWorldTransform = true;
+
+				public bool shoulderSolveEnabled = true;
+				public bool shoulderLimitEnabled = true;
+				public float shoulderLimitAngleYPlus = 30.0f;
+				public float shoulderLimitAngleYMinus = 1.0f;
+				public float shoulderLimitAngleZ = 30.0f;
+
+				public float spineDirXLegToArmRate = 0.5f;
+				public float spineDirXLegToArmToRate = 0.9f;
+				public float spineDirYLerpRate = 0.7f;
+
+				public float upperCenterLegTranslateRate = 0.5f;
+				public float upperSpineTranslateRate = 0.6f;
+
+				public float upperPreTranslateRate = 0.2f;			// Legacy
+				//public float upperCenterLegRotateRate = 0.673f;
+				//public float upperSpineRotateRate = 0.775f;
+				public float upperCenterLegRotateRate = 0.6f;
+				public float upperSpineRotateRate = 0.9f;
+				public float upperPostTranslateRate = 1.0f;
+
+				public bool upperSolveHipsEnabled = true;
+				public bool upperSolveSpineEnabled = true;
+				public bool upperSolveSpine2Enabled = true;
+				public bool upperSolveSpine3Enabled = true;
+				public bool upperSolveSpine4Enabled = true;
+
+				public float upperCenterLegLerpRate = 1.0f;
+				public float upperSpineLerpRate = 1.0f;
+
+				public bool spineLimitEnabled = true;
+				public bool spineLimitAccurateEnabled = false;
+				public float spineLimitAngleX = 40.0f;
+				public float spineLimitAngleY = 20.0f;
+
+				public float upperContinuousPreTranslateRate = 0.2f;
+				public float upperContinuousPreTranslateStableRate = 0.65f;
+				public float upperContinuousCenterLegRotationStableRate = 0.0f;
+				public float upperContinuousPostTranslateStableRate = 0.01f;
+				public float upperContinuousSpineDirYLerpRate = 0.5f;
+
+				public float upperNeckToCenterLegRate = 0.6f;
+				public float upperNeckToSpineRate = 0.9f;
+				public float upperEyesToCenterLegRate = 0.2f;
+				public float upperEyesToSpineRate = 0.5f;
+				public float upperEyesRateYUp = 0.25f;
+				public float upperEyesRateYDown = 0.5f;
+				public float upperEyesLimitAngleX = 35.0f;
+				public float upperEyesLimitAngleYUp = 10.0f;
+				public float upperEyesLimitAngleYDown = 45.0f;
+				public float upperEyesBackOffsetZ = 0.5f; // Lock when behind looking.
 			}
 
+			[System.Serializable]
 			public class LimbIK
 			{
+				public bool legAlwaysSolveEnabled = true;
+				public bool armAlwaysSolveEnabled = false;
+
 				public float automaticKneeBaseAngle = 0.0f;
+
+				public bool presolveKneeEnabled = false;
+				public bool presolveElbowEnabled = false;
 				public float presolveKneeRate = 1.0f;
 				public float presolveKneeLerpAngle = 10.0f;
 				public float presolveKneeLerpLengthRate = 0.1f;
 				public float presolveElbowRate = 1.0f;
 				public float presolveElbowLerpAngle = 10.0f;
 				public float presolveElbowLerpLengthRate = 0.1f;
-            }
 
+				public bool prefixLegEffectorEnabled = true;
+
+				public float prefixLegUpperLimitAngle = 60.0f;
+				public float prefixKneeUpperLimitAngle = 45.0f;
+
+				public float legEffectorMinLengthRate = 0.1f;
+				public float legEffectorMaxLengthRate = 0.9999f;
+				public float armEffectorMaxLengthRate = 0.9999f;
+
+				public bool armBasisForcefixEnabled = true;
+				public float armBasisForcefixEffectorLengthRate = 0.99f;
+				public float armBasisForcefixEffectorLengthLerpRate = 0.03f;
+
+				// Arm back area.(Automatic only, Based on localXZ)
+				public float armEffectorBackBeginAngle = 5.0f;
+				public float armEffectorBackCoreBeginAngle = -10.0f;
+				public float armEffectorBackCoreEndAngle = -30.0f;
+				public float armEffectorBackEndAngle = -160.0f;
+
+				// Arm back area.(Automatic only, Based on localYZ)
+				public float armEffectorBackCoreUpperAngle = 8.0f;
+				public float armEffectorBackCoreLowerAngle = -15.0f;
+
+				// Arm elbow angles.(Automatic only)
+				public float automaticElbowBaseAngle = 30.0f;
+				public float automaticElbowLowerAngle = 90.0f;
+				public float automaticElbowUpperAngle = 90.0f;
+				public float automaticElbowBackUpperAngle = 180.0f;
+				public float automaticElbowBackLowerAngle = 330.0f;
+
+				// Arm elbow limit angles.(Automatic / Manual)
+				public float elbowFrontInnerLimitAngle = 5.0f;
+				public float elbowBackInnerLimitAngle = 0.0f;
+			}
+
+			[System.Serializable]
 			public class HeadIK
 			{
 			}
 
+			[System.Serializable]
 			public class FingerIK
 			{
 			}
 
-			public BodyIK bodyIK = new BodyIK();
-			public LimbIK limbIK = new LimbIK();
-			public HeadIK headIK = new HeadIK();
-			public FingerIK fingerIK = new FingerIK();
-		}
+			public BodyIK bodyIK;
+			public LimbIK limbIK;
+			public HeadIK headIK;
+			public FingerIK fingerIK;
 
-		public class InternalValues
-		{
-			public bool animatorEnabled;
-			public bool resetTransforms;
-			public bool continuousSolverEnabled;
-
-			public Vector3 defaultRootPosition = Vector3.zero;
-			public Matrix3x3 defaultRootBasis = Matrix3x3.identity;
-			public Matrix3x3 defaultRootBasisInv = Matrix3x3.identity;
-			public Quaternion defaultRootRotation = Quaternion.identity;
+			public void Prefix()
+			{
+				SafeNew( ref bodyIK );
+				SafeNew( ref limbIK );
+				SafeNew( ref headIK );
+				SafeNew( ref fingerIK );
+			}
 		}
 
 		[System.Serializable]
@@ -446,72 +293,380 @@ namespace SA
 			public bool isShowEffectorTransform;
 		}
 
-		public BodyBones _bodyBones = BodyBones.Preset();
-		public HeadBones _headBones = HeadBones.Preset();
-		public LegBones _leftLegBones = LegBones.Preset( Side.Left );
-		public LegBones _rightLegBones = LegBones.Preset( Side.Right );
-		public ArmBones _leftArmBones = ArmBones.Preset( Side.Left );
-		public ArmBones _rightArmBones = ArmBones.Preset( Side.Right );
-		public FingersBones _leftHandFingersBones = FingersBones.Preset( Side.Left );
-		public FingersBones _rightHandFingersBones = FingersBones.Preset( Side.Right );
+		// Memo: Not Serializable
+		public class InternalValues
+		{
+			public bool animatorEnabled;
+			public bool resetTransforms;
+			public bool continuousSolverEnabled;
+			public int shoulderDirYAsNeck = -1;
 
-		public Effector _rootEffector = Effector.Preset( EffectorLocation.Root );
-		public BodyEffectors _bodyEffectors = BodyEffectors.Preset();
-		public HeadEffectors _headEffectors = HeadEffectors.Preset();
-		public LegEffectors _leftLegEffectors = LegEffectors.Preset( Side.Left );
-		public LegEffectors _rightLegEffectors = LegEffectors.Preset( Side.Right );
-		public ArmEffectors _leftArmEffectors = ArmEffectors.Preset( Side.Left );
-		public ArmEffectors _rightArmEffectors = ArmEffectors.Preset( Side.Right );
-		public FingersEffectors _leftHandFingersEffectors = FingersEffectors.Preset( Side.Left );
-		public FingersEffectors _rightHandFingersEffectors = FingersEffectors.Preset( Side.Right );
+			public Vector3 defaultRootPosition = Vector3.zero;
+			public Matrix3x3 defaultRootBasis = Matrix3x3.identity;
+			public Matrix3x3 defaultRootBasisInv = Matrix3x3.identity;
+			public Quaternion defaultRootRotation = Quaternion.identity;
 
-		public Settings _settings = new Settings();
-		public InternalValues _internalValues = new InternalValues();
-		public EditorSettings _editorSettings = new EditorSettings();
+#if SAFULLBODYIK_DEBUG
+			public DebugData debugData = new DebugData();
+#endif
 
-		public bool _prepareHumanoid = true; // todo: Move to settings.
+			[System.Diagnostics.Conditional( "SAFULLBODYIK_DEBUG" )]
+			public void ClearDegugPoints()
+			{
+#if SAFULLBODYIK_DEBUG
+				debugData.debugPoints.Clear();
+#endif
+			}
 
-		[Range( 0.0f, 1.0f )]
-		public float _armToTorsoTwistRate = 0.8f;
-		[Range( 0.0f, 1.0f )]
-		public float _armToTorsoUTwistRate = 0.9f;
-		public bool _shoulderLocked = false;
+			[System.Diagnostics.Conditional( "SAFULLBODYIK_DEBUG" )]
+			public void AddDebugPoint( Vector3 pos )
+			{
+#if SAFULLBODYIK_DEBUG
+				debugData.debugPoints.Add( new DebugPoint( pos ) );
+#endif
+			}
 
-		public bool bodyIKEnabled = true; // todo: Move to settings.
+			[System.Diagnostics.Conditional( "SAFULLBODYIK_DEBUG" )]
+			public void AddDebugPoint( Vector3 pos, Color color )
+			{
+#if SAFULLBODYIK_DEBUG
+				debugData.debugPoints.Add( new DebugPoint( pos, color ) );
+#endif
+			}
+
+			[System.Diagnostics.Conditional( "SAFULLBODYIK_DEBUG" )]
+			public void AddDebugPoint( Vector3 pos, Color color, float size )
+			{
+#if SAFULLBODYIK_DEBUG
+				debugData.debugPoints.Add( new DebugPoint( pos, color, size ) );
+#endif
+			}
+
+			[System.Diagnostics.Conditional( "SAFULLBODYIK_DEBUG" )]
+			public void UpdateDebugValue( string name, ref int v )
+			{
+#if SAFULLBODYIK_DEBUG
+				debugData.UpdateValue( name, ref v );
+#endif
+			}
+
+			[System.Diagnostics.Conditional( "SAFULLBODYIK_DEBUG" )]
+			public void UpdateDebugValue( string name, ref float v )
+			{
+#if SAFULLBODYIK_DEBUG
+				debugData.UpdateValue( name, ref v );
+#endif
+			}
+
+			[System.Diagnostics.Conditional( "SAFULLBODYIK_DEBUG" )]
+			public void UpdateDebugValue( string name, ref bool v )
+			{
+#if SAFULLBODYIK_DEBUG
+				debugData.UpdateValue( name, ref v );
+#endif
+			}
+
+			public class BodyIK
+			{
+				public CachedDegreesToSin shoulderLimitThetaYPlus = CachedDegreesToSin.zero;
+				public CachedDegreesToSin shoulderLimitThetaYMinus = CachedDegreesToSin.zero;
+				public CachedDegreesToSin shoulderLimitThetaZ = CachedDegreesToSin.zero;
+
+				public CachedRate01 upperCenterLegTranslateRate = CachedRate01.zero;
+				public CachedRate01 upperSpineTranslateRate = CachedRate01.zero;
+
+				public CachedRate01 upperPreTranslateRate = CachedRate01.zero;
+				public CachedRate01 upperPostTranslateRate = CachedRate01.zero;
+
+				public CachedRate01 upperCenterLegRotateRate = CachedRate01.zero;
+				public CachedRate01 upperSpineRotateRate = CachedRate01.zero;
+				public bool isFuzzyUpperCenterLegAndSpineRotationRate = true;
+
+				public CachedDegreesToSin upperEyesLimitThetaX = CachedDegreesToSin.zero;
+				public CachedDegreesToSin upperEyesLimitThetaYUp = CachedDegreesToSin.zero;
+				public CachedDegreesToSin upperEyesLimitThetaYDown = CachedDegreesToSin.zero;
+
+				public CachedScaledValue spineLimitAngleX = CachedScaledValue.zero; // Mathf.Deg2Rad(Not sin)
+				public CachedScaledValue spineLimitAngleY = CachedScaledValue.zero; // Mathf.Deg2Rad(Not sin)
+
+				public CachedRate01 upperContinuousPreTranslateRate = CachedRate01.zero;
+				public CachedRate01 upperContinuousPreTranslateStableRate = CachedRate01.zero;
+				public CachedRate01 upperContinuousCenterLegRotationStableRate = CachedRate01.zero;
+				public CachedRate01 upperContinuousPostTranslateStableRate = CachedRate01.zero;
+
+				public void Update( Settings.BodyIK settingsBodyIK )
+				{
+					// Optimize: Reduce C# fuction call.
+					Assert( settingsBodyIK != null );
+
+					if( shoulderLimitThetaYPlus._degrees != settingsBodyIK.shoulderLimitAngleYPlus ) {
+						shoulderLimitThetaYPlus._Reset( settingsBodyIK.shoulderLimitAngleYPlus );
+					}
+					if( shoulderLimitThetaYMinus._degrees != settingsBodyIK.shoulderLimitAngleYMinus ) {
+						shoulderLimitThetaYMinus._Reset( settingsBodyIK.shoulderLimitAngleYMinus );
+					}
+					if( shoulderLimitThetaZ._degrees != settingsBodyIK.shoulderLimitAngleZ ) {
+						shoulderLimitThetaZ._Reset( settingsBodyIK.shoulderLimitAngleZ );
+					}
+
+					if( upperCenterLegTranslateRate._value != settingsBodyIK.upperCenterLegTranslateRate ||
+						upperSpineTranslateRate._value != settingsBodyIK.upperSpineTranslateRate ) {
+						upperCenterLegTranslateRate._Reset( settingsBodyIK.upperCenterLegTranslateRate );
+						upperSpineTranslateRate._Reset( Mathf.Max( settingsBodyIK.upperCenterLegTranslateRate, settingsBodyIK.upperSpineTranslateRate ) );
+					}
+
+					if( upperPreTranslateRate._value != settingsBodyIK.upperPreTranslateRate ) {
+						upperPreTranslateRate._Reset( settingsBodyIK.upperPreTranslateRate );
+					}
+					if( upperPostTranslateRate._value != settingsBodyIK.upperPostTranslateRate ) {
+						upperPostTranslateRate._Reset( settingsBodyIK.upperPostTranslateRate );
+					}
+
+					if( upperCenterLegRotateRate._value != settingsBodyIK.upperCenterLegRotateRate ||
+						upperSpineRotateRate._value != settingsBodyIK.upperSpineRotateRate ) {
+						upperCenterLegRotateRate._Reset( settingsBodyIK.upperCenterLegRotateRate );
+						upperSpineRotateRate._Reset( Mathf.Max( settingsBodyIK.upperCenterLegRotateRate, settingsBodyIK.upperSpineRotateRate ) );
+						isFuzzyUpperCenterLegAndSpineRotationRate = IsFuzzy( upperCenterLegRotateRate.value, upperSpineRotateRate.value );
+					}
+
+					if( upperEyesLimitThetaX._degrees != settingsBodyIK.upperEyesLimitAngleX ) {
+						upperEyesLimitThetaX._Reset( settingsBodyIK.upperEyesLimitAngleX );
+					}
+					if( upperEyesLimitThetaYUp._degrees != settingsBodyIK.upperEyesLimitAngleYUp ) {
+						upperEyesLimitThetaYUp._Reset( settingsBodyIK.upperEyesLimitAngleYUp );
+					}
+					if( upperEyesLimitThetaYDown._degrees != settingsBodyIK.upperEyesLimitAngleYDown ) {
+						upperEyesLimitThetaYDown._Reset( settingsBodyIK.upperEyesLimitAngleYDown );
+					}
+
+					if( spineLimitAngleX._a != settingsBodyIK.spineLimitAngleX ) {
+						spineLimitAngleX._Reset( settingsBodyIK.spineLimitAngleX, Mathf.Deg2Rad );
+					}
+					if( spineLimitAngleY._a != settingsBodyIK.spineLimitAngleY ) {
+						spineLimitAngleY._Reset( settingsBodyIK.spineLimitAngleY, Mathf.Deg2Rad );
+					}
+
+					if( upperContinuousPreTranslateRate._value != settingsBodyIK.upperContinuousPreTranslateRate ) {
+						upperContinuousPreTranslateRate._Reset( settingsBodyIK.upperContinuousPreTranslateRate );
+					}
+					if( upperContinuousPreTranslateStableRate._value != settingsBodyIK.upperContinuousPreTranslateStableRate ) {
+						upperContinuousPreTranslateStableRate._Reset( settingsBodyIK.upperContinuousPreTranslateStableRate );
+					}
+					if( upperContinuousCenterLegRotationStableRate._value != settingsBodyIK.upperContinuousCenterLegRotationStableRate ) {
+						upperContinuousCenterLegRotationStableRate._Reset( settingsBodyIK.upperContinuousCenterLegRotationStableRate );
+					}
+					if( upperContinuousPostTranslateStableRate._value != settingsBodyIK.upperContinuousPostTranslateStableRate ) {
+						upperContinuousPostTranslateStableRate._Reset( settingsBodyIK.upperContinuousPostTranslateStableRate );
+					}
+				}
+			}
+
+			public class LimbIK
+			{
+				public CachedDegreesToSin armEffectorBackBeginTheta = CachedDegreesToSin.zero;
+				public CachedDegreesToSin armEffectorBackCoreBeginTheta = CachedDegreesToSin.zero;
+				public CachedDegreesToCos armEffectorBackCoreEndTheta = CachedDegreesToCos.zero;
+				public CachedDegreesToCos armEffectorBackEndTheta = CachedDegreesToCos.zero;
+
+				public CachedDegreesToSin armEffectorBackCoreUpperTheta = CachedDegreesToSin.zero;
+				public CachedDegreesToSin armEffectorBackCoreLowerTheta = CachedDegreesToSin.zero;
+
+				public CachedDegreesToSin elbowFrontInnerLimitTheta = CachedDegreesToSin.zero;
+				public CachedDegreesToSin elbowBackInnerLimitTheta = CachedDegreesToSin.zero;
+
+				public void Update( Settings.LimbIK settingsLimbIK )
+				{
+					// Optimize: Reduce C# fuction call.
+					Assert( settingsLimbIK != null );
+
+					if( armEffectorBackBeginTheta._degrees != settingsLimbIK.armEffectorBackBeginAngle ) {
+						armEffectorBackBeginTheta._Reset( settingsLimbIK.armEffectorBackBeginAngle );
+					}
+					if( armEffectorBackCoreBeginTheta._degrees != settingsLimbIK.armEffectorBackCoreBeginAngle ) {
+						armEffectorBackCoreBeginTheta._Reset( settingsLimbIK.armEffectorBackCoreBeginAngle );
+					}
+					if( armEffectorBackCoreEndTheta._degrees != settingsLimbIK.armEffectorBackCoreEndAngle ) {
+						armEffectorBackCoreEndTheta._Reset( settingsLimbIK.armEffectorBackCoreEndAngle );
+					}
+					if( armEffectorBackEndTheta._degrees != settingsLimbIK.armEffectorBackEndAngle ) {
+						armEffectorBackEndTheta._Reset( settingsLimbIK.armEffectorBackEndAngle );
+					}
+
+					if( armEffectorBackCoreUpperTheta._degrees != settingsLimbIK.armEffectorBackCoreUpperAngle ) {
+						armEffectorBackCoreUpperTheta._Reset( settingsLimbIK.armEffectorBackCoreUpperAngle );
+					}
+					if( armEffectorBackCoreLowerTheta._degrees != settingsLimbIK.armEffectorBackCoreLowerAngle ) {
+						armEffectorBackCoreLowerTheta._Reset( settingsLimbIK.armEffectorBackCoreLowerAngle );
+					}
+
+					if( elbowFrontInnerLimitTheta._degrees != settingsLimbIK.elbowFrontInnerLimitAngle ) {
+						elbowFrontInnerLimitTheta._Reset( settingsLimbIK.elbowFrontInnerLimitAngle );
+					}
+					if( elbowBackInnerLimitTheta._degrees != settingsLimbIK.elbowBackInnerLimitAngle ) {
+						elbowBackInnerLimitTheta._Reset( settingsLimbIK.elbowBackInnerLimitAngle );
+					}
+				}
+			}
+
+			public BodyIK bodyIK = new BodyIK();
+			public LimbIK limbIK = new LimbIK();
+		}
+
+		// Memo: Not Serializable
+		public class BoneCaches
+		{
+			public struct HipsToFootLength
+			{
+				public Vector3 hipsToLeg;
+				public Vector3 legToKnee;
+				public Vector3 kneeToFoot;
+
+				public Vector3 defaultOffset;
+			}
+
+			public HipsToFootLength[] hipsToFootLength = new HipsToFootLength[2];
+
+			void _PrepareHipsToFootLength( int index, Bone legBone, Bone kneeBone, Bone footBone, InternalValues internalValues )
+			{
+				Assert( internalValues != null );
+				if( legBone != null && kneeBone != null && footBone != null ) {
+					float hipsToLegLen = legBone._defaultLocalLength.length;
+                    float legToKneeLen = kneeBone._defaultLocalLength.length;
+					float kneeToFootLen = footBone._defaultLocalLength.length;
+
+					Vector3 hipsToLegDir = legBone._defaultLocalDirection;
+                    Vector3 legToKneeDir = kneeBone._defaultLocalDirection;
+					Vector3 kneeToFootDir = footBone._defaultLocalDirection;
+
+					SAFBIKMatMultVec( out hipsToFootLength[index].hipsToLeg, ref internalValues.defaultRootBasisInv, ref hipsToLegDir );
+					SAFBIKMatMultVec( out hipsToFootLength[index].legToKnee, ref internalValues.defaultRootBasisInv, ref legToKneeDir );
+					SAFBIKMatMultVec( out hipsToFootLength[index].kneeToFoot, ref internalValues.defaultRootBasisInv, ref kneeToFootDir );
+
+					hipsToFootLength[index].defaultOffset =
+						hipsToFootLength[index].hipsToLeg * hipsToLegLen +
+						hipsToFootLength[index].legToKnee * legToKneeLen +
+						hipsToFootLength[index].kneeToFoot * kneeToFootLen;
+				}
+			}
+
+			Vector3 _GetHipsOffset( int index, Bone legBone, Bone kneeBone, Bone footBone )
+			{
+				if( legBone != null && kneeBone != null && footBone != null ) {
+					float hipsToLegLen = legBone._defaultLocalLength.length;
+					float legToKneeLen = kneeBone._defaultLocalLength.length;
+					float kneeToFootLen = footBone._defaultLocalLength.length;
+
+					Vector3 currentOffset =
+						hipsToFootLength[index].hipsToLeg * hipsToLegLen +
+						hipsToFootLength[index].legToKnee * legToKneeLen +
+						hipsToFootLength[index].kneeToFoot * kneeToFootLen;
+
+					return currentOffset - hipsToFootLength[index].defaultOffset;
+				}
+
+				return Vector3.zero;
+            }
+
+			public Vector3 defaultHipsPosition = Vector3.zero;
+			public Vector3 hipsOffset = Vector3.zero;
+
+			public void Prepare( FullBodyIK fullBodyIK )
+			{
+				_PrepareHipsToFootLength( 0, fullBodyIK.leftLegBones.leg, fullBodyIK.leftLegBones.knee, fullBodyIK.leftLegBones.foot, fullBodyIK.internalValues );
+				_PrepareHipsToFootLength( 1, fullBodyIK.rightLegBones.leg, fullBodyIK.rightLegBones.knee, fullBodyIK.rightLegBones.foot, fullBodyIK.internalValues );
+				if( fullBodyIK.bodyBones.hips != null ) {
+					defaultHipsPosition = fullBodyIK.bodyBones.hips._defaultPosition;
+				}
+			}
+
+			public void _SyncDisplacement( FullBodyIK fullBodyIK )
+			{
+				Assert( fullBodyIK != null );
+
+				Vector3 hipsOffset0 = _GetHipsOffset( 0, fullBodyIK.leftLegBones.leg, fullBodyIK.leftLegBones.knee, fullBodyIK.leftLegBones.foot );
+				Vector3 hipsOffset1 = _GetHipsOffset( 1, fullBodyIK.rightLegBones.leg, fullBodyIK.rightLegBones.knee, fullBodyIK.rightLegBones.foot );
+				hipsOffset = (hipsOffset0 + hipsOffset1) * 0.5f;
+			}
+		}
+
+		public Transform rootTransform;
+
+		[System.NonSerialized]
+		public InternalValues internalValues = new InternalValues();
+		[System.NonSerialized]
+		public BoneCaches boneCaches = new BoneCaches();
+
+		public Settings settings;
+		public EditorSettings editorSettings;
+
+		public BodyBones bodyBones;
+		public HeadBones headBones;
+		public LegBones leftLegBones;
+		public LegBones rightLegBones;
+		public ArmBones leftArmBones;
+		public ArmBones rightArmBones;
+		public FingersBones leftHandFingersBones;
+		public FingersBones rightHandFingersBones;
+
+		public Effector rootEffector;
+		public BodyEffectors bodyEffectors;
+		public HeadEffectors headEffectors;
+		public LegEffectors leftLegEffectors;
+		public LegEffectors rightLegEffectors;
+		public ArmEffectors leftArmEffectors;
+		public ArmEffectors rightArmEffectors;
+		public FingersEffectors leftHandFingersEffectors;
+		public FingersEffectors rightHandFingersEffectors;
+
+		public Bone[] bones { get { return _bones; } }
+		public Effector[] effectors { get { return _effectors; } }
 
 		Bone[] _bones = new Bone[(int)BoneType.Max];
 		Effector[] _effectors = new Effector[(int)EffectorLocation.Max];
 
-		public Bone[] bones { get { return _bones; } }
-		public Effector[] effectors { get { return _effectors; } }
-		
 		BodyIK _bodyIK;
 		LimbIK[] _limbIK = new LimbIK[(int)LimbIKLocation.Max];
 		HeadIK _headIK;
 		FingerIK[] _fingerIK = new FingerIK[(int)FingerIKType.Max];
 
 		bool _isPrefixed;
+		bool _isPrepared;
+		[SerializeField]
+		bool _isPrefixedAtLeastOnce;
 
-		void Awake()
+		public void Initialize( Transform rootTransorm_ )
 		{
-			if( !Application.isPlaying ) {
-				return;
+			if( rootTransform != rootTransorm_ ) {
+				rootTransform = rootTransorm_;
 			}
 
-			#if SAFULLBODYIK_DEBUG_LOCKTRANSFORM
-			_debug_currentPosition = this.transform.position;
-			#endif
-
-			#if SAFULLBODYIK_DEBUG_CONSTRUCT_TIME
+#if SAFULLBODYIK_DEBUG_CONSTRUCT_TIME
 			float constructBeginTime = Time.realtimeSinceStartup;
-			#endif
-			Prefix();
+#endif
+			_Prefix();
+#if SAFULLBODYIK_DEBUG_CONSTRUCT_TIME
+			float prefixEndTime = Time.realtimeSinceStartup;
+#endif
 			ConfigureBoneTransforms();
+#if SAFULLBODYIK_DEBUG_CONSTRUCT_TIME
+			float configureBoneEndTime = Time.realtimeSinceStartup;
+#endif
 			Prepare();
-			#if SAFULLBODYIK_DEBUG_CONSTRUCT_TIME
-			float constructEndTime = Time.realtimeSinceStartup;
-			Debug.Log( "Construct time: " + (constructEndTime - constructBeginTime) );
-			#endif
+#if SAFULLBODYIK_DEBUG_CONSTRUCT_TIME
+			float prefetchEndTime = Time.realtimeSinceStartup;
+			Debug.Log( "Total time: " + (prefetchEndTime - constructBeginTime) + " _Prefix():" + (prefixEndTime - constructBeginTime) + " ConfigureBoneTransforms():" + (configureBoneEndTime - prefixEndTime) + " Prefetch():" + (prefetchEndTime - configureBoneEndTime) );
+#endif
+		}
+
+		public void Destroy()
+		{
+			if( _effectors != null ) {
+				for( int i = 0; i < _effectors.Length; ++i ) {
+					if( _effectors[i].transform != null ) {
+						GameObject.DestroyImmediate( _effectors[i].transform.gameObject );
+					}
+                }
+			}
 		}
 
 		static void _SetBoneTransform( ref Bone bone, Transform transform )
@@ -535,6 +690,21 @@ namespace SA
 				}
 				bones[i].transform = transforms[index, i];
 			}
+		}
+
+		static bool _IsSpine( Transform trn )
+		{
+			if( trn != null ) {
+				string name = trn.name;
+				if( name.Contains( "Spine" ) || name.Contains( "spine" ) || name.Contains( "SPINE" ) ) {
+					return true;
+				}
+				if( name.Contains( "Torso" ) || name.Contains( "torso" ) || name.Contains( "TORSO" ) ) {
+					return true;
+				}
+			}
+
+			return false;
 		}
 
 		static bool _IsNeck( Transform trn )
@@ -563,71 +733,54 @@ namespace SA
 			return false;
 		}
 
-		// - Call from Awake() or Editor script.
-		// - transform is null yet.
-		public void Prefix()
+		// - Call from Editor script.
+		public void Prefix( Transform rootTransform_ )
+		{
+			if( rootTransform != rootTransform_ ) {
+				rootTransform = rootTransform_;
+            }
+
+			_Prefix();
+		}
+
+		// - Call from FullBodyIKBehaviour.Awake() / FullBodyIK.Initialize().
+		// - Bone transforms are null yet.
+		void _Prefix()
 		{
 			if( _isPrefixed ) {
 				return;
 			}
-			
+
 			_isPrefixed = true;
-			
-			if( _bodyBones == null ) {
-				_bodyBones = BodyBones.Preset();
-			}
-			if( _headBones == null ) {
-				_headBones = HeadBones.Preset();
-			}
-			if( _leftLegBones == null ) {
-				_leftLegBones = LegBones.Preset( Side.Left );
-			}
-			if( _rightLegBones == null ) {
-				_rightLegBones = LegBones.Preset( Side.Right );
-			}
-			if( _leftArmBones == null ) {
-				_leftArmBones = ArmBones.Preset( Side.Left );
-			} else {
-				_leftArmBones.Repair( Side.Left );
-			}
-			if( _rightArmBones == null ) {
-				_rightArmBones = ArmBones.Preset( Side.Right );
-			} else {
-				_rightArmBones.Repair( Side.Right );
-            }
-			if( _leftHandFingersBones == null ) {
-				_leftHandFingersBones = FingersBones.Preset( Side.Left );
-			} else {
-				_leftHandFingersBones.Repair( Side.Left );
-			}
-			if( _rightHandFingersBones == null ) {
-				_rightHandFingersBones = FingersBones.Preset( Side.Right );
-			} else {
-				_rightHandFingersBones.Repair( Side.Right );
-			}
 
-			if( _bodyEffectors == null ) {
-				_bodyEffectors = BodyEffectors.Preset();
-			}
-			if( _headEffectors == null ) {
-				_headEffectors = HeadEffectors.Preset();
-			}
-			if( _leftArmEffectors == null ) {
-				_leftArmEffectors = ArmEffectors.Preset( Side.Left );
-			}
-			if( _rightArmEffectors == null ) {
-				_rightArmEffectors = ArmEffectors.Preset( Side.Right );
-			}
-			if( _leftLegEffectors == null ) {
-				_leftLegEffectors = LegEffectors.Preset( Side.Left );
-			}
-			if( _rightLegEffectors == null ) {
-				_rightLegEffectors = LegEffectors.Preset( Side.Right );
-			}
+			SafeNew( ref bodyBones );
+			SafeNew( ref headBones );
+			SafeNew( ref leftLegBones );
+			SafeNew( ref rightLegBones );
 
-			if( _settings == null ) {
-				_settings = new Settings();
-			}
+			SafeNew( ref leftArmBones );
+			leftArmBones.Repair();
+			SafeNew( ref rightArmBones );
+			rightArmBones.Repair();
+
+			SafeNew( ref leftHandFingersBones );
+			leftHandFingersBones.Repair();
+			SafeNew( ref rightHandFingersBones );
+			rightHandFingersBones.Repair();
+
+			SafeNew( ref bodyEffectors );
+			SafeNew( ref headEffectors );
+			SafeNew( ref leftArmEffectors );
+			SafeNew( ref rightArmEffectors );
+			SafeNew( ref leftLegEffectors );
+			SafeNew( ref rightLegEffectors );
+
+			SafeNew( ref settings );
+			SafeNew( ref editorSettings );
+			SafeNew( ref internalValues );
+
+			settings.Prefix();
+
 			if( _bones == null || _bones.Length != (int)BoneLocation.Max ) {
 				_bones = new Bone[(int)BoneLocation.Max];
 			}
@@ -635,37 +788,39 @@ namespace SA
 				_effectors = new Effector[(int)EffectorLocation.Max];
 			}
 
-			_Prefix( ref _bodyBones.pelvis, BoneLocation.Pelvis, null );
-			_Prefix( ref _bodyBones.torso, BoneLocation.Torso, _bodyBones.pelvis );
-			_Prefix( ref _bodyBones.torso2, BoneLocation.Torso2, _bodyBones.torso );
-			_Prefix( ref _headBones.neck, BoneLocation.Neck, _bodyBones.torso2 );
-			_Prefix( ref _headBones.head, BoneLocation.Head, _headBones.neck );
-			_Prefix( ref _headBones.leftEye, BoneLocation.LeftEye, _headBones.head );
-			_Prefix( ref _headBones.rightEye, BoneLocation.RightEye, _headBones.head );
-			for( int i = 0; i < 2; ++i ) {
-				var legBones = (i == 0) ? _leftLegBones : _rightLegBones;
-				_Prefix( ref legBones.leg, (i == 0) ? BoneLocation.LeftLeg : BoneLocation.RightLeg, _bodyBones.pelvis );
+			_Prefix( ref bodyBones.hips, BoneLocation.Hips, null );
+			_Prefix( ref bodyBones.spine, BoneLocation.Spine, bodyBones.hips );
+			_Prefix( ref bodyBones.spine2, BoneLocation.Spine2, bodyBones.spine );
+			_Prefix( ref bodyBones.spine3, BoneLocation.Spine3, bodyBones.spine2 );
+			_Prefix( ref bodyBones.spine4, BoneLocation.Spine4, bodyBones.spine3 );
+			_Prefix( ref headBones.neck, BoneLocation.Neck, bodyBones.spineU );
+			_Prefix( ref headBones.head, BoneLocation.Head, headBones.neck );
+			_Prefix( ref headBones.leftEye, BoneLocation.LeftEye, headBones.head );
+			_Prefix( ref headBones.rightEye, BoneLocation.RightEye, headBones.head );
+			for( int i = 0; i != 2; ++i ) {
+				var legBones = (i == 0) ? leftLegBones : rightLegBones;
+				_Prefix( ref legBones.leg, (i == 0) ? BoneLocation.LeftLeg : BoneLocation.RightLeg, bodyBones.hips );
 				_Prefix( ref legBones.knee, (i == 0) ? BoneLocation.LeftKnee : BoneLocation.RightKnee, legBones.leg );
 				_Prefix( ref legBones.foot, (i == 0) ? BoneLocation.LeftFoot : BoneLocation.RightFoot, legBones.knee );
 
-				var armBones = (i == 0) ? _leftArmBones : _rightArmBones;
-				_Prefix( ref armBones.shoulder, (i == 0) ? BoneLocation.LeftShoulder : BoneLocation.RightShoulder, _bodyBones.torso2 );
+				var armBones = (i == 0) ? leftArmBones : rightArmBones;
+				_Prefix( ref armBones.shoulder, (i == 0) ? BoneLocation.LeftShoulder : BoneLocation.RightShoulder, bodyBones.spineU );
 				_Prefix( ref armBones.arm, (i == 0) ? BoneLocation.LeftArm : BoneLocation.RightArm, armBones.shoulder );
 				_Prefix( ref armBones.elbow, (i == 0) ? BoneLocation.LeftElbow : BoneLocation.RightElbow, armBones.arm );
 				_Prefix( ref armBones.wrist, (i == 0) ? BoneLocation.LeftWrist : BoneLocation.RightWrist, armBones.elbow );
 
-				for( int n = 0; n < MaxArmTwistLength; ++n ) {
-					var armTwistLocation = (i == 0) ? BoneLocation.LeftArmTwist0 : BoneLocation.RightArmTwist0;
-					_Prefix( ref armBones.armTwist[n], (BoneLocation)((int)armTwistLocation + n), armBones.arm );
+				for( int n = 0; n != MaxArmRollLength; ++n ) {
+					var armRollLocation = (i == 0) ? BoneLocation.LeftArmRoll0 : BoneLocation.RightArmRoll0;
+					_Prefix( ref armBones.armRoll[n], (BoneLocation)((int)armRollLocation + n), armBones.arm );
 				}
 
-				for( int n = 0; n < MaxHandTwistLength; ++n ) {
-					var handTwistLocation = (i == 0) ? BoneLocation.LeftHandTwist0 : BoneLocation.RightHandTwist0;
-					_Prefix( ref armBones.handTwist[n], (BoneLocation)((int)handTwistLocation + n), armBones.elbow );
+				for( int n = 0; n != MaxElbowRollLength; ++n ) {
+					var elbowRollLocation = (i == 0) ? BoneLocation.LeftElbowRoll0 : BoneLocation.RightElbowRoll0;
+					_Prefix( ref armBones.elbowRoll[n], (BoneLocation)((int)elbowRollLocation + n), armBones.elbow );
 				}
 
-				var fingerBones = (i == 0) ? _leftHandFingersBones : _rightHandFingersBones;
-				for( int n = 0; n < MaxHandFingerLength; ++n ) {
+				var fingerBones = (i == 0) ? leftHandFingersBones : rightHandFingersBones;
+				for( int n = 0; n != MaxHandFingerLength; ++n ) {
 					var thumbLocation = (i == 0) ? BoneLocation.LeftHandThumb0 : BoneLocation.RightHandThumb0;
 					var indexLocation = (i == 0) ? BoneLocation.LeftHandIndex0 : BoneLocation.RightHandIndex0;
 					var middleLocation = (i == 0) ? BoneLocation.LeftHandMiddle0 : BoneLocation.RightHandMiddle0;
@@ -679,54 +834,73 @@ namespace SA
 				}
 			}
 
-			_Prefix( ref _rootEffector, EffectorLocation.Root );
-			_Prefix( ref _bodyEffectors.pelvis, EffectorLocation.Pelvis, _rootEffector, _bodyBones.pelvis, _leftLegBones.leg, _rightLegBones.leg );
-			_Prefix( ref _headEffectors.neck, EffectorLocation.Neck, _bodyEffectors.pelvis, _headBones.neck );
-			_Prefix( ref _headEffectors.head, EffectorLocation.Head, _headEffectors.neck, _headBones.head );
-			_Prefix( ref _headEffectors.eyes, EffectorLocation.Eyes, _rootEffector, _headBones.head, _headBones.leftEye, _headBones.rightEye );
+			_Prefix( ref rootEffector, EffectorLocation.Root );
+			_Prefix( ref bodyEffectors.hips, EffectorLocation.Hips, rootEffector, bodyBones.hips, leftLegBones.leg, rightLegBones.leg );
+			_Prefix( ref headEffectors.neck, EffectorLocation.Neck, bodyEffectors.hips, headBones.neck );
+			_Prefix( ref headEffectors.head, EffectorLocation.Head, headEffectors.neck, headBones.head );
+			_Prefix( ref headEffectors.eyes, EffectorLocation.Eyes, rootEffector, headBones.head, headBones.leftEye, headBones.rightEye );
 
-			_Prefix( ref _leftLegEffectors.knee, EffectorLocation.LeftKnee, _rootEffector, _leftLegBones.knee );
-			_Prefix( ref _leftLegEffectors.foot, EffectorLocation.LeftFoot, _rootEffector, _leftLegBones.foot );
-			_Prefix( ref _rightLegEffectors.knee, EffectorLocation.RightKnee, _rootEffector, _rightLegBones.knee );
-			_Prefix( ref _rightLegEffectors.foot, EffectorLocation.RightFoot, _rootEffector, _rightLegBones.foot );
+			_Prefix( ref leftLegEffectors.knee, EffectorLocation.LeftKnee, rootEffector, leftLegBones.knee );
+			_Prefix( ref leftLegEffectors.foot, EffectorLocation.LeftFoot, rootEffector, leftLegBones.foot );
+			_Prefix( ref rightLegEffectors.knee, EffectorLocation.RightKnee, rootEffector, rightLegBones.knee );
+			_Prefix( ref rightLegEffectors.foot, EffectorLocation.RightFoot, rootEffector, rightLegBones.foot );
 
-			_Prefix( ref _leftArmEffectors.arm, EffectorLocation.LeftArm, _bodyEffectors.pelvis, _leftArmBones.arm );
-			_Prefix( ref _leftArmEffectors.elbow, EffectorLocation.LeftElbow, _bodyEffectors.pelvis, _leftArmBones.elbow );
-			_Prefix( ref _leftArmEffectors.wrist, EffectorLocation.LeftWrist, _bodyEffectors.pelvis, _leftArmBones.wrist );
-			_Prefix( ref _rightArmEffectors.arm, EffectorLocation.RightArm, _bodyEffectors.pelvis, _rightArmBones.arm );
-			_Prefix( ref _rightArmEffectors.elbow, EffectorLocation.RightElbow, _bodyEffectors.pelvis, _rightArmBones.elbow );
-			_Prefix( ref _rightArmEffectors.wrist, EffectorLocation.RightWrist, _bodyEffectors.pelvis, _rightArmBones.wrist );
-		
-			_Prefix( ref _leftHandFingersEffectors.thumb, EffectorLocation.LeftHandThumb, _leftArmEffectors.wrist, _leftHandFingersBones.thumb );
-			_Prefix( ref _leftHandFingersEffectors.index, EffectorLocation.LeftHandIndex, _leftArmEffectors.wrist, _leftHandFingersBones.index );
-			_Prefix( ref _leftHandFingersEffectors.middle, EffectorLocation.LeftHandMiddle, _leftArmEffectors.wrist, _leftHandFingersBones.middle );
-			_Prefix( ref _leftHandFingersEffectors.ring, EffectorLocation.LeftHandRing, _leftArmEffectors.wrist, _leftHandFingersBones.ring );
-			_Prefix( ref _leftHandFingersEffectors.little, EffectorLocation.LeftHandLittle, _leftArmEffectors.wrist, _leftHandFingersBones.little );
+			_Prefix( ref leftArmEffectors.arm, EffectorLocation.LeftArm, bodyEffectors.hips, leftArmBones.arm );
+			_Prefix( ref leftArmEffectors.elbow, EffectorLocation.LeftElbow, bodyEffectors.hips, leftArmBones.elbow );
+			_Prefix( ref leftArmEffectors.wrist, EffectorLocation.LeftWrist, bodyEffectors.hips, leftArmBones.wrist );
+			_Prefix( ref rightArmEffectors.arm, EffectorLocation.RightArm, bodyEffectors.hips, rightArmBones.arm );
+			_Prefix( ref rightArmEffectors.elbow, EffectorLocation.RightElbow, bodyEffectors.hips, rightArmBones.elbow );
+			_Prefix( ref rightArmEffectors.wrist, EffectorLocation.RightWrist, bodyEffectors.hips, rightArmBones.wrist );
 
-			_Prefix( ref _rightHandFingersEffectors.thumb, EffectorLocation.RightHandThumb, _rightArmEffectors.wrist, _rightHandFingersBones.thumb );
-			_Prefix( ref _rightHandFingersEffectors.index, EffectorLocation.RightHandIndex, _rightArmEffectors.wrist, _rightHandFingersBones.index );
-			_Prefix( ref _rightHandFingersEffectors.middle, EffectorLocation.RightHandMiddle, _rightArmEffectors.wrist, _rightHandFingersBones.middle );
-			_Prefix( ref _rightHandFingersEffectors.ring, EffectorLocation.RightHandRing, _rightArmEffectors.wrist, _rightHandFingersBones.ring );
-			_Prefix( ref _rightHandFingersEffectors.little, EffectorLocation.RightHandLittle, _rightArmEffectors.wrist, _rightHandFingersBones.little );
+			_Prefix( ref leftHandFingersEffectors.thumb, EffectorLocation.LeftHandThumb, leftArmEffectors.wrist, leftHandFingersBones.thumb );
+			_Prefix( ref leftHandFingersEffectors.index, EffectorLocation.LeftHandIndex, leftArmEffectors.wrist, leftHandFingersBones.index );
+			_Prefix( ref leftHandFingersEffectors.middle, EffectorLocation.LeftHandMiddle, leftArmEffectors.wrist, leftHandFingersBones.middle );
+			_Prefix( ref leftHandFingersEffectors.ring, EffectorLocation.LeftHandRing, leftArmEffectors.wrist, leftHandFingersBones.ring );
+			_Prefix( ref leftHandFingersEffectors.little, EffectorLocation.LeftHandLittle, leftArmEffectors.wrist, leftHandFingersBones.little );
+
+			_Prefix( ref rightHandFingersEffectors.thumb, EffectorLocation.RightHandThumb, rightArmEffectors.wrist, rightHandFingersBones.thumb );
+			_Prefix( ref rightHandFingersEffectors.index, EffectorLocation.RightHandIndex, rightArmEffectors.wrist, rightHandFingersBones.index );
+			_Prefix( ref rightHandFingersEffectors.middle, EffectorLocation.RightHandMiddle, rightArmEffectors.wrist, rightHandFingersBones.middle );
+			_Prefix( ref rightHandFingersEffectors.ring, EffectorLocation.RightHandRing, rightArmEffectors.wrist, rightHandFingersBones.ring );
+			_Prefix( ref rightHandFingersEffectors.little, EffectorLocation.RightHandLittle, rightArmEffectors.wrist, rightHandFingersBones.little );
 
 			// Hidden function.
-			if( _settings.modelTemplate == ModelTemplate.Standard ) {
-				var animator = this.GetComponent<Animator>();
-				if( animator != null ) {
-					var avatar = animator.avatar;
-					if( avatar != null ) {
-						if( avatar.name.Contains( "unitychan" ) ) {
-							_settings.modelTemplate = ModelTemplate.UnityChan;
-                        }
+			Assert( rootTransform != null );
+			if( rootTransform != null ) {
+				if( settings.modelTemplate == ModelTemplate.Standard ) {
+					var animator = rootTransform.GetComponent<Animator>();
+					if( animator != null ) {
+						var avatar = animator.avatar;
+						if( avatar != null ) {
+							if( avatar.name.Contains( "unitychan" ) ) {
+								settings.modelTemplate = ModelTemplate.UnityChan;
+							}
+						}
 					}
 				}
 			}
+
+			if( !_isPrefixedAtLeastOnce ) {
+				_isPrefixedAtLeastOnce = true;
+				_PresetEffectorPull( leftArmEffectors.wrist );
+				_PresetEffectorPull( rightArmEffectors.wrist );
+				_PresetEffectorPull( leftLegEffectors.foot );
+				_PresetEffectorPull( rightLegEffectors.foot );
+			}
 		}
-		
+
+		static void _PresetEffectorPull( Effector effector )
+		{
+			if( effector != null ) {
+				effector.positionEnabled = true;
+				effector.pull = 1.0f;
+            }
+		}
+
 		public void CleanupBoneTransforms()
 		{
-			Prefix();
-			
+			_Prefix();
+
 			if( _bones != null ) {
 				for( int i = 0; i < _bones.Length; ++i ) {
 					Assert( _bones[i] != null );
@@ -771,21 +945,24 @@ namespace SA
 						}
 					}
 				}
-            }
+			}
 
 			return null;
 		}
-		
+
 		public void ConfigureBoneTransforms()
 		{
-			Prefix();
-			
-			if( _prepareHumanoid ) {
-				Animator animator = this.gameObject.GetComponent<Animator>();
+			_Prefix();
+
+			Assert( settings != null && rootTransform != null );
+			if( settings.automaticPrepareHumanoid && rootTransform != null ) {
+				Animator animator = rootTransform.GetComponent<Animator>();
 				if( animator != null && animator.isHuman ) {
-					Transform pelvis = animator.GetBoneTransform( HumanBodyBones.Hips );
-					Transform torso = animator.GetBoneTransform( HumanBodyBones.Spine );
-					Transform torso2 = animator.GetBoneTransform( HumanBodyBones.Chest );
+					Transform hips = animator.GetBoneTransform( HumanBodyBones.Hips );
+					Transform spine = animator.GetBoneTransform( HumanBodyBones.Spine );
+					Transform spine2 = animator.GetBoneTransform( HumanBodyBones.Chest );
+					Transform spine3 = null;
+					Transform spine4 = null;
 					Transform neck = animator.GetBoneTransform( HumanBodyBones.Neck );
 					Transform head = animator.GetBoneTransform( HumanBodyBones.Head );
 					Transform leftEye = animator.GetBoneTransform( HumanBodyBones.LeftEye );
@@ -806,11 +983,11 @@ namespace SA
 					Transform rightWrist = animator.GetBoneTransform( HumanBodyBones.RightHand );
 					Transform[,] leftFingers = new Transform[5, 4];
 					Transform[,] rightFingers = new Transform[5, 4];
-					for( int n = 0; n < 2; ++n ) {
+					for( int n = 0; n != 2; ++n ) {
 						int humanBodyBones = ((n == 0) ? (int)HumanBodyBones.LeftThumbProximal : (int)HumanBodyBones.RightThumbProximal);
 						Transform[,] fingers = ((n == 0) ? leftFingers : rightFingers);
-						for( int i = 0; i < 5; ++i ) {
-							for( int j = 0; j < 3; ++j, ++humanBodyBones ) {
+						for( int i = 0; i != 5; ++i ) {
+							for( int j = 0; j != 3; ++j, ++humanBodyBones ) {
 								fingers[i, j] = animator.GetBoneTransform( (HumanBodyBones)humanBodyBones );
 							}
 							// Fix for tips.
@@ -838,95 +1015,117 @@ namespace SA
 						rightEye = _FindEye( head, true );
 					}
 
-					_SetBoneTransform( ref _bodyBones.pelvis, pelvis );
-					_SetBoneTransform( ref _bodyBones.torso, torso );
-					_SetBoneTransform( ref _bodyBones.torso2, torso2 );
+					if( settings.automaticConfigureSpineEnabled ) {
+						if( spine != null && neck != null ) {
+							var spines = new List<Transform>();
+							for( Transform trn = neck.parent; trn != null && trn != spine; trn = trn.parent ) {
+								if( _IsSpine( trn ) ) {
+									spines.Insert( 0, trn );
+								}
+                            }
 
-					_SetBoneTransform( ref _headBones.neck, neck );
-					_SetBoneTransform( ref _headBones.head, head );
-					_SetBoneTransform( ref _headBones.leftEye, leftEye );
-					_SetBoneTransform( ref _headBones.rightEye, rightEye );
+							spines.Insert( 0, spine );
 
-					_SetBoneTransform( ref _leftLegBones.leg, leftLeg );
-					_SetBoneTransform( ref _leftLegBones.knee, leftKnee );
-					_SetBoneTransform( ref _leftLegBones.foot, leftFoot );
-					_SetBoneTransform( ref _rightLegBones.leg, rightLeg );
-					_SetBoneTransform( ref _rightLegBones.knee, rightKnee );
-					_SetBoneTransform( ref _rightLegBones.foot, rightFoot );
+							int spineMaxLength = (int)BoneLocation.SpineU - (int)BoneLocation.Spine + 1;
+							if( spines.Count > spineMaxLength ) {
+								spines.RemoveRange( spineMaxLength, spines.Count - spineMaxLength );
+							}
 
-					_SetBoneTransform( ref _leftArmBones.shoulder, leftShoulder );
-					_SetBoneTransform( ref _leftArmBones.arm, leftArm );
-					_SetBoneTransform( ref _leftArmBones.elbow, leftElbow );
-					_SetBoneTransform( ref _leftArmBones.wrist, leftWrist );
-					_SetBoneTransform( ref _rightArmBones.shoulder, rightShoulder );
-					_SetBoneTransform( ref _rightArmBones.arm, rightArm );
-					_SetBoneTransform( ref _rightArmBones.elbow, rightElbow );
-					_SetBoneTransform( ref _rightArmBones.wrist, rightWrist );
+							spine2 = (spines.Count >= 2) ? spines[1] : null;
+							spine3 = (spines.Count >= 3) ? spines[2] : null;
+							spine4 = (spines.Count >= 4) ? spines[3] : null;
+						}
+					}
 
-					_SetFingerBoneTransform( ref _leftHandFingersBones.thumb, leftFingers, 0 );
-					_SetFingerBoneTransform( ref _leftHandFingersBones.index, leftFingers, 1 );
-					_SetFingerBoneTransform( ref _leftHandFingersBones.middle, leftFingers, 2 );
-					_SetFingerBoneTransform( ref _leftHandFingersBones.ring, leftFingers, 3 );
-					_SetFingerBoneTransform( ref _leftHandFingersBones.little, leftFingers, 4 );
+					_SetBoneTransform( ref bodyBones.hips, hips );
+					_SetBoneTransform( ref bodyBones.spine, spine );
+					_SetBoneTransform( ref bodyBones.spine2, spine2 );
+					_SetBoneTransform( ref bodyBones.spine3, spine3 );
+					_SetBoneTransform( ref bodyBones.spine4, spine4 );
 
-					_SetFingerBoneTransform( ref _rightHandFingersBones.thumb, rightFingers, 0 );
-					_SetFingerBoneTransform( ref _rightHandFingersBones.index, rightFingers, 1 );
-					_SetFingerBoneTransform( ref _rightHandFingersBones.middle, rightFingers, 2 );
-					_SetFingerBoneTransform( ref _rightHandFingersBones.ring, rightFingers, 3 );
-					_SetFingerBoneTransform( ref _rightHandFingersBones.little, rightFingers, 4 );
+					_SetBoneTransform( ref headBones.neck, neck );
+					_SetBoneTransform( ref headBones.head, head );
+					_SetBoneTransform( ref headBones.leftEye, leftEye );
+					_SetBoneTransform( ref headBones.rightEye, rightEye );
+
+					_SetBoneTransform( ref leftLegBones.leg, leftLeg );
+					_SetBoneTransform( ref leftLegBones.knee, leftKnee );
+					_SetBoneTransform( ref leftLegBones.foot, leftFoot );
+					_SetBoneTransform( ref rightLegBones.leg, rightLeg );
+					_SetBoneTransform( ref rightLegBones.knee, rightKnee );
+					_SetBoneTransform( ref rightLegBones.foot, rightFoot );
+
+					_SetBoneTransform( ref leftArmBones.shoulder, leftShoulder );
+					_SetBoneTransform( ref leftArmBones.arm, leftArm );
+					_SetBoneTransform( ref leftArmBones.elbow, leftElbow );
+					_SetBoneTransform( ref leftArmBones.wrist, leftWrist );
+					_SetBoneTransform( ref rightArmBones.shoulder, rightShoulder );
+					_SetBoneTransform( ref rightArmBones.arm, rightArm );
+					_SetBoneTransform( ref rightArmBones.elbow, rightElbow );
+					_SetBoneTransform( ref rightArmBones.wrist, rightWrist );
+
+					_SetFingerBoneTransform( ref leftHandFingersBones.thumb, leftFingers, 0 );
+					_SetFingerBoneTransform( ref leftHandFingersBones.index, leftFingers, 1 );
+					_SetFingerBoneTransform( ref leftHandFingersBones.middle, leftFingers, 2 );
+					_SetFingerBoneTransform( ref leftHandFingersBones.ring, leftFingers, 3 );
+					_SetFingerBoneTransform( ref leftHandFingersBones.little, leftFingers, 4 );
+
+					_SetFingerBoneTransform( ref rightHandFingersBones.thumb, rightFingers, 0 );
+					_SetFingerBoneTransform( ref rightHandFingersBones.index, rightFingers, 1 );
+					_SetFingerBoneTransform( ref rightHandFingersBones.middle, rightFingers, 2 );
+					_SetFingerBoneTransform( ref rightHandFingersBones.ring, rightFingers, 3 );
+					_SetFingerBoneTransform( ref rightHandFingersBones.little, rightFingers, 4 );
 				}
 			}
 
-			if( _settings.automaticConfigureTwistEnabled ) {
+			if( settings.automaticConfigureRollEnabled ) {
 				var tempBones = new List<Transform>();
 
-				for( int side = 0; side < 2; ++side ) {
-					var armBones = (side == 0) ? _leftArmBones : _rightArmBones;
+				for( int side = 0; side != 2; ++side ) {
+					var armBones = (side == 0) ? leftArmBones : rightArmBones;
 					if( armBones != null &&
 						armBones.arm != null && armBones.arm.transform != null &&
 						armBones.elbow != null && armBones.elbow.transform != null &&
 						armBones.wrist != null && armBones.wrist.transform != null ) {
 
-						armBones.Repair( (Side)side );
-
-						_ConfigureTwistBones( armBones.armTwist, tempBones, armBones.arm.transform, armBones.elbow.transform, (Side)side, true );
-						_ConfigureTwistBones( armBones.handTwist, tempBones, armBones.elbow.transform, armBones.wrist.transform, (Side)side, false );
+						_ConfigureRollBones( armBones.armRoll, tempBones, armBones.arm.transform, armBones.elbow.transform, (Side)side, true );
+						_ConfigureRollBones( armBones.elbowRoll, tempBones, armBones.elbow.transform, armBones.wrist.transform, (Side)side, false );
 					}
 				}
 			}
 		}
 
-		void _ConfigureTwistBones( Bone[] bones, List<Transform> tempBones, Transform transform, Transform excludeTransform, Side side, bool isArm )
+		void _ConfigureRollBones( Bone[] bones, List<Transform> tempBones, Transform transform, Transform excludeTransform, Side side, bool isArm )
 		{
-			bool isTwistSpecial = false;
-			string twistSpecialName = null;
+			bool isRollSpecial = false;
+			string rollSpecialName = null;
 			if( isArm ) {
-				twistSpecialName = (side == Side.Left) ? "LeftArmTwist" : "RightArmTwist";
-            } else {
-				twistSpecialName = (side == Side.Left) ? "LeftHandTwist" : "RightHandTwist";
+				rollSpecialName = (side == Side.Left) ? "LeftArmRoll" : "RightArmRoll";
+			} else {
+				rollSpecialName = (side == Side.Left) ? "LeftElbowRoll" : "RightElbowRoll";
 			}
 
 			int childCount = transform.childCount;
 
-			for( int i = 0; i < childCount; ++i ) {
+			for( int i = 0; i != childCount; ++i ) {
 				var childTransform = transform.GetChild( i );
 				var name = childTransform.name;
-				if( name != null && name.Contains( twistSpecialName ) ) {
-					isTwistSpecial = true;
+				if( name != null && name.Contains( rollSpecialName ) ) {
+					isRollSpecial = true;
 					break;
 				}
 			}
 
 			tempBones.Clear();
 
-			for( int i = 0; i < childCount; ++i ) {
+			for( int i = 0; i != childCount; ++i ) {
 				var childTransform = transform.GetChild( i );
 				var name = childTransform.name;
 				if( name != null ) {
 					if( excludeTransform != childTransform &&
 						!excludeTransform.IsChildOf( childTransform ) ) {
-						if( isTwistSpecial ) {
-							if( name.Contains( twistSpecialName ) ) {
+						if( isRollSpecial ) {
+							if( name.Contains( rollSpecialName ) ) {
 								char nameEnd = name[name.Length - 1];
 								if( nameEnd >= '0' && nameEnd <= '9' ) {
 									tempBones.Add( childTransform );
@@ -940,7 +1139,7 @@ namespace SA
 			}
 
 			childCount = Mathf.Min( tempBones.Count, bones.Length );
-			for( int i = 0; i < childCount; ++i ) {
+			for( int i = 0; i != childCount; ++i ) {
 				_SetBoneTransform( ref bones[i], tempBones[i] );
 			}
 		}
@@ -949,48 +1148,56 @@ namespace SA
 		// - Require to setup each transforms.
 		public void Prepare()
 		{
-			Prefix();
+			_Prefix();
 
-			if( this.transform != null ) { // Failsafe.
-				_internalValues.defaultRootPosition = this.transform.position;
-                _internalValues.defaultRootBasis = Matrix3x3.FromColumn( this.transform.right, this.transform.up, this.transform.forward );
-				_internalValues.defaultRootBasisInv = _internalValues.defaultRootBasis.transpose;
-				_internalValues.defaultRootRotation = this.transform.rotation;
+			if( _isPrepared ) {
+				return;
+			}
+
+			_isPrepared = true;
+
+			Assert( rootTransform != null );
+			if( rootTransform != null ) { // Failsafe.
+				internalValues.defaultRootPosition = rootTransform.position;
+				internalValues.defaultRootBasis = Matrix3x3.FromColumn( rootTransform.right, rootTransform.up, rootTransform.forward );
+				internalValues.defaultRootBasisInv = internalValues.defaultRootBasis.transpose;
+				internalValues.defaultRootRotation = rootTransform.rotation;
 			}
 
 			if( _bones != null ) {
-				for( int i = 0; i < _bones.Length; ++i ) {
+				int boneLength = _bones.Length;
+				for( int i = 0; i != boneLength; ++i ) {
 					Assert( _bones[i] != null );
 					if( _bones[i] != null ) {
 						_bones[i].Prepare( this );
 					}
 				}
-				for( int i = 0; i < _bones.Length; ++i ) {
-					Assert( _bones[i] != null );
+				for( int i = 0; i != boneLength; ++i ) {
 					if( _bones[i] != null ) {
 						_bones[i].PostPrepare();
 					}
 				}
 			}
 
+			boneCaches.Prepare( this );
+
 			if( _effectors != null ) {
-				for( int i = 0; i < _effectors.Length; ++i ) {
+				int effectorLength = _effectors.Length;
+                for( int i = 0; i != effectorLength; ++i ) {
 					Assert( _effectors[i] != null );
 					if( _effectors[i] != null ) {
 						_effectors[i].Prepare( this );
 					}
 				}
 			}
-			
-			// Overwrite.
+
 			_bodyIK = new BodyIK( this );
 
 			if( _limbIK == null || _limbIK.Length != (int)LimbIKLocation.Max ) {
 				_limbIK = new LimbIK[(int)LimbIKLocation.Max];
 			}
 
-			// Overwrite.
-			for( int i = 0; i < _limbIK.Length; ++i ) {
+			for( int i = 0; i != (int)LimbIKLocation.Max; ++i ) {
 				_limbIK[i] = new LimbIK( this, (LimbIKLocation)i );
 			}
 
@@ -1000,83 +1207,125 @@ namespace SA
 				_fingerIK = new FingerIK[(int)FingerIKType.Max];
 			}
 
-			for( int i = 0; i < _fingerIK.Length; ++i ) {
+			for( int i = 0; i != (int)FingerIKType.Max; ++i ) {
 				_fingerIK[i] = new FingerIK( this, (FingerIKType)i );
-            }
+			}
 		}
 
-		// Caches.
-		Animator _animator;
-		RuntimeAnimatorController _runtimeAnimatorController;
-		Animation _animation; // Legacy support.
+		bool _isAnimatorCheckedAtLeastOnce = false;
 
 		void _UpdateInternalValues()
 		{
 			// _animatorEnabledImmediately
-			if( _settings.animatorEnabled == AutomaticBool.Auto ) {
-				_internalValues.animatorEnabled = false;
-				if( _animator == null ) {
-					_animator = this.GetComponent< Animator >();
-				}
-				if( _animator != null && _animator.enabled ) {
-					_runtimeAnimatorController = _animator.runtimeAnimatorController;
-					_internalValues.animatorEnabled = (_runtimeAnimatorController != null);
-				}
-				if( !_internalValues.animatorEnabled ) { // Legacy support.
-					if( _animation == null ) {
-						_animation = this.GetComponent< Animation >();
-					}
-					if( _animation != null && _animation.enabled && _animation.GetClipCount() > 0 ) {
-						_internalValues.animatorEnabled = true;
+			if( settings.animatorEnabled == AutomaticBool.Auto ) {
+				if( !_isAnimatorCheckedAtLeastOnce ) {
+					_isAnimatorCheckedAtLeastOnce = true;
+					internalValues.animatorEnabled = false;
+					if( rootTransform != null ) {
+						var animator = rootTransform.GetComponent<Animator>();
+						if( animator != null && animator.enabled ) {
+							var runtimeAnimatorController = animator.runtimeAnimatorController;
+							internalValues.animatorEnabled = (runtimeAnimatorController != null);
+						}
+						if( animator == null ) { // Legacy support.
+							var animation = rootTransform.GetComponent<Animation>();
+							if( animation != null && animation.enabled && animation.GetClipCount() > 0 ) {
+								internalValues.animatorEnabled = true;
+							}
+						}
 					}
 				}
 			} else {
-				_internalValues.animatorEnabled = (_settings.animatorEnabled != AutomaticBool.Disable);
+				internalValues.animatorEnabled = (settings.animatorEnabled != AutomaticBool.Disable);
+				_isAnimatorCheckedAtLeastOnce = false;
 			}
 
-			if( _settings.resetTransforms == AutomaticBool.Auto ) {
-				_internalValues.resetTransforms = !(_internalValues.animatorEnabled);
+			if( settings.resetTransforms == AutomaticBool.Auto ) {
+				internalValues.resetTransforms = !(internalValues.animatorEnabled);
 			} else {
-				_internalValues.resetTransforms = (_settings.resetTransforms != AutomaticBool.Disable);
+				internalValues.resetTransforms = (settings.resetTransforms != AutomaticBool.Disable);
 			}
 
-			_internalValues.continuousSolverEnabled = !_internalValues.animatorEnabled && !_internalValues.resetTransforms;
+			internalValues.continuousSolverEnabled = !internalValues.animatorEnabled && !internalValues.resetTransforms;
+
+			internalValues.bodyIK.Update( settings.bodyIK );
+			internalValues.limbIK.Update( settings.limbIK );
+        }
+
+		bool _isSyncDisplacementAtLeastOnce = false;
+
+		void _Bones_SyncDisplacement()
+		{
+			// Sync Displacement.
+			if( settings.syncDisplacement != SyncDisplacement.Disable ) {
+				if( settings.syncDisplacement == SyncDisplacement.Everyframe || !_isSyncDisplacementAtLeastOnce ) {
+					_isSyncDisplacementAtLeastOnce = true;
+
+					if( _bones != null ) {
+						int boneLength = _bones.Length;
+						for( int i = 0; i != boneLength; ++i ) {
+							if( _bones[i] != null ) {
+								_bones[i].SyncDisplacement();
+							}
+						}
+
+						// for Hips
+						boneCaches._SyncDisplacement( this );
+
+						for( int i = 0; i != boneLength; ++i ) {
+							if( _bones[i] != null ) {
+								_bones[i].PostSyncDisplacement( this );
+							}
+						}
+
+						for( int i = 0; i != boneLength; ++i ) {
+							if( _bones[i] != null ) {
+								_bones[i].PostPrepare();
+							}
+						}
+					}
+
+					// Forceupdate _defaultPosition / _defaultRotation
+					if( _effectors != null ) {
+						int effectorLength = _effectors.Length;
+						for( int i = 0; i != effectorLength; ++i ) {
+							if( _effectors[i] != null ) {
+								_effectors[i]._ComputeDefaultTransform( this );
+                            }
+						}
+					}
+                }
+			}
 		}
 
-		void LateUpdate()
+		public void Update()
 		{
-			if( !Application.isPlaying ) {
-				return;
-			}
-
-#if SAFULLBODYIK_DEBUG_LOCKTRANSFORM
-			this.transform.position = _debug_currentPosition;
-#endif
-
 			_UpdateInternalValues();
 
 			if( _effectors != null ) {
-				for( int i = 0; i < _effectors.Length; ++i ) {
+				int effectorLength = _effectors.Length;
+                for( int i = 0; i != effectorLength; ++i ) {
 					if( _effectors[i] != null ) {
 						_effectors[i].PrepareUpdate();
 					}
 				}
 			}
-			
-#if SAFULLBODYIK_DEBUG
-			_debugData.debugPoints.Clear();
-#endif
+
+			internalValues.ClearDegugPoints();
 
 			_Bones_PrepareUpdate();
+
+			_Bones_SyncDisplacement();
 
 			// Feedback bonePositions to effectorPositions.
 			// (for AnimatorEnabled only.)
 			if( _effectors != null ) {
-				for( int i = 0; i < _effectors.Length; ++i ) {
+				int effectorLength = _effectors.Length;
+				for( int i = 0; i != effectorLength; ++i ) {
 					if( _effectors[i] != null ) {
 						_effectors[i]._hidden_worldPosition = _effectors[i].worldPosition;
 
-						if( _internalValues.animatorEnabled && !_internalValues.resetTransforms ) {
+						if( internalValues.animatorEnabled && !internalValues.resetTransforms ) {
 							if( _effectors[i].positionEnabled && _effectors[i].positionWeight < 1.0f - IKEpsilon ) {
 								float weight = (_effectors[i].positionWeight > IKEpsilon) ? _effectors[i].positionWeight : 0.0f;
 								if( _effectors[i].bone != null && _effectors[i].bone.transformIsAlive ) {
@@ -1093,8 +1342,13 @@ namespace SA
 			}
 
 			// Presolve locations.
-			for( int i = 0; i < _limbIK.Length; ++i ) {
-				_limbIK[i].PresolveBeinding();
+			if( _limbIK != null ) {
+				int limbIKLength = _limbIK.Length;
+                for( int i = 0; i != limbIKLength; ++i ) {
+					if( _limbIK[i] != null ) {
+						_limbIK[i].PresolveBeinding();
+					}
+				}
 			}
 
 			if( _bodyIK != null ) {
@@ -1108,19 +1362,17 @@ namespace SA
 
 				bool isSolved = false;
 				if( _limbIK != null ) {
-					for( int i = 0; i < _limbIK.Length; ++i ) {
+					int limbIKLength = _limbIK.Length;
+					for( int i = 0; i != limbIKLength; ++i ) {
 						if( _limbIK[i] != null ) {
-							if( _limbIK[i].Solve() ) {
-								isSolved |= true;
-								_limbIK[i].Twist();
-							}
+							isSolved |= _limbIK[i].Solve();
 						}
 					}
 				}
 				if( _headIK != null ) {
 					_headIK.Solve();
 					isSolved = true;
-                }
+				}
 
 				if( isSolved ) {
 					_Bones_WriteToTransform();
@@ -1131,8 +1383,11 @@ namespace SA
 				_Bones_PrepareUpdate();
 
 				bool isSolved = false;
-				for( int i = 0; i < _fingerIK.Length; ++i ) {
-					isSolved |= _fingerIK[i].Solve();
+				int fingerIKLength = _fingerIK.Length;
+                for( int i = 0; i != fingerIKLength; ++i ) {
+					if( _fingerIK[i] != null ) {
+						isSolved |= _fingerIK[i].Solve();
+					}
 				}
 
 				if( isSolved ) {
@@ -1144,7 +1399,8 @@ namespace SA
 		void _Bones_PrepareUpdate()
 		{
 			if( _bones != null ) {
-				for( int i = 0; i < _bones.Length; ++i ) {
+				int boneLength = _bones.Length;
+                for( int i = 0; i != boneLength; ++i ) {
 					if( _bones[i] != null ) {
 						_bones[i].PrepareUpdate();
 					}
@@ -1155,7 +1411,8 @@ namespace SA
 		void _Bones_WriteToTransform()
 		{
 			if( _bones != null ) {
-				for( int i = 0; i < _bones.Length; ++i ) {
+				int boneLength = _bones.Length;
+				for( int i = 0; i != boneLength; ++i ) {
 					if( _bones[i] != null ) {
 						_bones[i].WriteToTransform();
 					}
@@ -1163,36 +1420,34 @@ namespace SA
 			}
 		}
 
-		void OnDestroy()
-		{
-			if( !Application.isPlaying ) {
-				return;
-			}
-		}
-
 #if UNITY_EDITOR
-		void OnDrawGizmos()
+		public void DrawGizmos()
 		{
 			Vector3 cameraForward = Camera.current.transform.forward;
 
 			if( _effectors != null ) {
-				for( int i = 0; i != _effectors.Length; ++i ) {
+				int effectorLength = _effectors.Length;
+                for( int i = 0; i != effectorLength; ++i ) {
 					_DrawEffectorGizmo( _effectors[i] );
 				}
 			}
 
 			if( _bones != null ) {
-				for( int i = 0; i != _bones.Length; ++i ) {
+				int boneLength = _bones.Length;
+                for( int i = 0; i != boneLength; ++i ) {
 					_DrawBoneGizmo( _bones[i], ref cameraForward );
 				}
 			}
 
 #if SAFULLBODYIK_DEBUG
-			var debugPoints = _debugData.debugPoints;
-			for( int i = 0; i < debugPoints.Count; ++i ) {
-				Gizmos.color = debugPoints[i].color;
-				for( int n = 0; n < 8; ++n ) {
-					Gizmos.DrawWireSphere( debugPoints[i].pos, debugPoints[i].size );
+			if( internalValues != null && internalValues.debugData != null ) {
+				var debugPoints = internalValues.debugData.debugPoints;
+				int debugPointCount = debugPoints.Count;
+                for( int i = 0; i != debugPointCount; ++i ) {
+					Gizmos.color = debugPoints[i].color;
+					for( int n = 0; n != 8; ++n ) {
+						Gizmos.DrawWireSphere( debugPoints[i].pos, debugPoints[i].size );
+					}
 				}
 			}
 #endif
@@ -1204,7 +1459,7 @@ namespace SA
 		static void _DrawEffectorGizmo( Effector effector )
 		{
 			if( effector != null ) {
-				bool isFinger = (effector.bone != null && effector.bone.boneType == BoneType.HandFinger );
+				bool isFinger = (effector.bone != null && effector.bone.boneType == BoneType.HandFinger);
 				float effectorSize = (isFinger ? _FingerEffectorGizmoSize : _EffectorGizmoSize);
 				Gizmos.color = Color.green;
 
@@ -1229,7 +1484,7 @@ namespace SA
 			}
 
 			if( bone.boneType == BoneType.Eye ) {
-				if( _settings.modelTemplate == ModelTemplate.UnityChan ) {
+				if( settings.modelTemplate == ModelTemplate.UnityChan ) {
 					return;
 				}
 			}
@@ -1237,14 +1492,17 @@ namespace SA
 			Transform parentTransform = bone.parentTransform;
 
 			Vector3 position = bone.transform.position;
-			Matrix3x3 basis = bone.transform.rotation * bone._worldToBoneRotation;
+			Quaternion rotation = bone.transform.rotation * bone._worldToBoneRotation;
+			Matrix3x3 basis;
+			SAFBIKMatSetRot( out basis, ref rotation );
 
 			_DrawTransformGizmo( position, ref basis, ref cameraForward, bone.boneType );
 
 			if( parentTransform != null ) {
 				Gizmos.color = Color.white;
 
-				basis = parentTransform.rotation * bone.parentBone._worldToBoneRotation;
+				rotation = parentTransform.rotation * bone.parentBone._worldToBoneRotation;
+				SAFBIKMatSetRot( out basis, ref rotation );
 
 				_DrawBoneGizmo( parentTransform.position, position, ref basis, ref cameraForward, bone.boneType );
 			}
@@ -1282,7 +1540,7 @@ namespace SA
 			BoneType boneType )
 		{
 			Vector3 nY = Vector3.Cross( cameraForward, direction );
-			if( _SafeNormalize( ref nY ) ) {
+			if( SAFBIKVecNormalize( ref nY ) ) {
 				Gizmos.color = color;
 
 				float arrowGizmoLowerLength = _ArrowGizmoLowerLength;
@@ -1337,9 +1595,9 @@ namespace SA
 		static void _DrawBoneGizmo( Vector3 fromPosition, Vector3 toPosition, ref Matrix3x3 basis, ref Vector3 cameraForward, BoneType boneType )
 		{
 			Vector3 dir = toPosition - fromPosition;
-			if( _SafeNormalize( ref dir ) ) {
+			if( SAFBIKVecNormalize( ref dir ) ) {
 				Vector3 nY = Vector3.Cross( cameraForward, dir );
-				if( _SafeNormalize( ref nY ) ) {
+				if( SAFBIKVecNormalize( ref nY ) ) {
 					float boneGizmoOuterLen = _BoneGizmoOuterLen;
 					float boneGizmoThickness = _BoneGizmoThickness;
 					if( boneType == BoneType.HandFinger ) {
@@ -1369,16 +1627,17 @@ namespace SA
 			Assert( _bones != null );
 			Bone.Prefix( _bones, ref bone, boneLocation, parentBoneLocationBased );
 		}
-		
+
 		void _Prefix(
 			ref Effector effector,
 			EffectorLocation effectorLocation )
 		{
 			Assert( _effectors != null );
-			bool createEffectorTransform = this._settings.createEffectorTransform;
-			Effector.Prefix( _effectors, ref effector, effectorLocation, createEffectorTransform, this.transform );
+			bool createEffectorTransform = this.settings.createEffectorTransform;
+			Assert( rootTransform != null );
+			Effector.Prefix( _effectors, ref effector, effectorLocation, createEffectorTransform, rootTransform );
 		}
-		
+
 		void _Prefix(
 			ref Effector effector,
 			EffectorLocation effectorLocation,
@@ -1397,10 +1656,8 @@ namespace SA
 			Bone rightBone = null )
 		{
 			Assert( _effectors != null );
-			bool createEffectorTransform = this._settings.createEffectorTransform;
+			bool createEffectorTransform = this.settings.createEffectorTransform;
 			Effector.Prefix( _effectors, ref effector, effectorLocation, createEffectorTransform, null, parentEffector, bone, leftBone, rightBone );
 		}
-
 	}
-
 }

@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace SA
 {
-	public static class FullBodyIKEditorUtil
+	public static class FullBodyIKEditorUtility
 	{
 		public static class GUI
 		{
@@ -132,6 +132,36 @@ namespace SA
 					obj = tempObj;
 					EditorUtility.SetDirty( target );
 				}
+			}
+
+			public static void Field( string name, ref bool value, params GUILayoutOption[] options )
+			{
+				value = EditorGUILayout.Toggle( name, value, options );
+			}
+
+			public static void Field( string name, ref int value, params GUILayoutOption[] options )
+			{
+				value = EditorGUILayout.IntField( name, value, options );
+			}
+
+			public static void Slider( string name, ref int value, int minValue, int maxValue, params GUILayoutOption[] options )
+			{
+				value = EditorGUILayout.IntSlider( name, value, minValue, maxValue, options );
+			}
+
+			public static void Field( string name, ref float value, params GUILayoutOption[] options )
+			{
+				value = EditorGUILayout.FloatField( name, value, options );
+			}
+
+			public static void Slider( string name, ref float value, float minValue, float maxValue, params GUILayoutOption[] options )
+			{
+				value = EditorGUILayout.Slider( name, value, minValue, maxValue, options );
+			}
+
+			public static void Slider01( string name, ref float value, params GUILayoutOption[] options )
+			{
+				value = EditorGUILayout.Slider( name, value, 0.0f, 1.0f, options );
 			}
 
 			static List<bool> _guiEnabledStack = new List<bool>();

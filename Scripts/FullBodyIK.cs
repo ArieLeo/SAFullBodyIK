@@ -1,6 +1,6 @@
 ﻿// Copyright (c) 2016 Nora
 // Released under the MIT license
-// http://opensource.org/licenses/mit-license.phpusing
+// http://opensource.org/licenses/mit-license.php
 
 #if SAFULLBODYIK_DEBUG
 #define SAFULLBODYIK_DEBUG_CONSTRUCT_TIME
@@ -140,39 +140,40 @@ namespace SA
 			public AutomaticBool resetTransforms = AutomaticBool.Auto;
 			public SyncDisplacement syncDisplacement = SyncDisplacement.Disable;
 
+			public AutomaticBool shoulderDirYAsNeck = AutomaticBool.Auto;
+
 			public bool automaticPrepareHumanoid = true;
 			public bool automaticConfigureSpineEnabled = false;
 
-			public bool automaticConfigureRollEnabled = false;
-			public bool rollEnabled = false;
+			public bool automaticConfigureRollBonesEnabled = false;
+			public bool rollBonesEnabled = false;
 
 			public bool createEffectorTransform = true;
-
-			public ModelTemplate modelTemplate = ModelTemplate.Standard;
 
 			[System.Serializable]
 			public class BodyIK
 			{
+				public bool forceSolveEnabled = true;
+
 				public bool lowerSolveEnabled = true;
 				public bool upperSolveEnabled = true;
 				public bool computeWorldTransform = true;
 
 				public bool shoulderSolveEnabled = true;
-				public bool shoulderLimitEnabled = true;
+				public float shoulderSolveBendingRate = 0.25f;
+                public bool shoulderLimitEnabled = true;
 				public float shoulderLimitAngleYPlus = 30.0f;
 				public float shoulderLimitAngleYMinus = 1.0f;
 				public float shoulderLimitAngleZ = 30.0f;
 
 				public float spineDirXLegToArmRate = 0.5f;
-				public float spineDirXLegToArmToRate = 0.9f;
-				public float spineDirYLerpRate = 0.7f;
+				public float spineDirXLegToArmToRate = 1.0f;
+				public float spineDirYLerpRate = 0.5f;
 
+				public float upperBodyMovingfixRate = 1.0f;
+				public float upperHeadMovingfixRate = 0.8f;
 				public float upperCenterLegTranslateRate = 0.5f;
-				public float upperSpineTranslateRate = 0.6f;
-
-				public float upperPreTranslateRate = 0.2f;			// Legacy
-				//public float upperCenterLegRotateRate = 0.673f;
-				//public float upperSpineRotateRate = 0.775f;
+				public float upperSpineTranslateRate = 0.65f;
 				public float upperCenterLegRotateRate = 0.6f;
 				public float upperSpineRotateRate = 0.9f;
 				public float upperPostTranslateRate = 1.0f;
@@ -186,10 +187,13 @@ namespace SA
 				public float upperCenterLegLerpRate = 1.0f;
 				public float upperSpineLerpRate = 1.0f;
 
+				public bool upperDirXLimitEnabled = true; // Effective for spineLimitEnabled && spineLimitAngleX
+				public float upperDirXLimitAngleY = 20.0f;
+
 				public bool spineLimitEnabled = true;
-				public bool spineLimitAccurateEnabled = false;
+				public bool spineAccurateLimitEnabled = false;
 				public float spineLimitAngleX = 40.0f;
-				public float spineLimitAngleY = 20.0f;
+				public float spineLimitAngleY = 25.0f;
 
 				public float upperContinuousPreTranslateRate = 0.2f;
 				public float upperContinuousPreTranslateStableRate = 0.65f;
@@ -201,12 +205,13 @@ namespace SA
 				public float upperNeckToSpineRate = 0.9f;
 				public float upperEyesToCenterLegRate = 0.2f;
 				public float upperEyesToSpineRate = 0.5f;
-				public float upperEyesRateYUp = 0.25f;
-				public float upperEyesRateYDown = 0.5f;
-				public float upperEyesLimitAngleX = 35.0f;
-				public float upperEyesLimitAngleYUp = 10.0f;
-				public float upperEyesLimitAngleYDown = 45.0f;
-				public float upperEyesBackOffsetZ = 0.5f; // Lock when behind looking.
+				public float upperEyesYawRate = 0.8f;
+				public float upperEyesPitchUpRate = 0.25f;
+				public float upperEyesPitchDownRate = 0.5f;
+				public float upperEyesLimitYaw = 80.0f;
+				public float upperEyesLimitPitchUp = 10.0f;
+				public float upperEyesLimitPitchDown = 45.0f;
+				public float upperEyesTraceAngle = 160.0f;
 			}
 
 			[System.Serializable]
@@ -239,6 +244,9 @@ namespace SA
 				public float armBasisForcefixEffectorLengthRate = 0.99f;
 				public float armBasisForcefixEffectorLengthLerpRate = 0.03f;
 
+				public bool armEffectorBackfixEnabled = true;
+				public bool armEffectorInnerfixEnabled = true;
+
 				// Arm back area.(Automatic only, Based on localXZ)
 				public float armEffectorBackBeginAngle = 5.0f;
 				public float armEffectorBackCoreBeginAngle = -10.0f;
@@ -259,11 +267,44 @@ namespace SA
 				// Arm elbow limit angles.(Automatic / Manual)
 				public float elbowFrontInnerLimitAngle = 5.0f;
 				public float elbowBackInnerLimitAngle = 0.0f;
+
+				// Wrist limit
+				public bool wristLimitEnabled = true;
+				public float wristLimitAngle = 90.0f;
+
+				// Foot limit
+				public bool footLimitEnabled = true;
+				public float footLimitYaw = 45.0f;
+				public float footLimitPitchUp = 45.0f;
+				public float footLimitPitchDown = 60.0f;
+				public float footLimitRoll = 45.0f;
 			}
 
 			[System.Serializable]
 			public class HeadIK
 			{
+				public float neckLimitPitchUp = 15.0f;
+				public float neckLimitPitchDown = 30.0f;
+				public float neckLimitRoll = 5.0f;
+
+				public float eyesToNeckPitchRate = 0.4f;
+
+				public float headLimitYaw = 60.0f;
+				public float headLimitPitchUp = 15.0f;
+				public float headLimitPitchDown = 15.0f;
+				public float headLimitRoll = 5.0f;
+
+				public float eyesToHeadYawRate = 0.8f;
+				public float eyesToHeadPitchRate = 0.5f;
+
+				public float eyesTraceAngle = 110.0f;
+
+				public float eyesLimitYaw = 40.0f;
+				public float eyesLimitPitch = 12.0f;
+				public float eyesYawRate = 0.796f;
+				public float eyesPitchRate = 0.729f;
+				public float eyesYawOuterRate = 0.356f;
+				public float eyesYawInnerRate = 0.212f;
 			}
 
 			[System.Serializable]
@@ -305,6 +346,10 @@ namespace SA
 			public Matrix3x3 defaultRootBasis = Matrix3x3.identity;
 			public Matrix3x3 defaultRootBasisInv = Matrix3x3.identity;
 			public Quaternion defaultRootRotation = Quaternion.identity;
+
+			// Using by resetTransforms & continuousSolverEnabled.
+			public Vector3 baseHipsPos = Vector3.zero;
+			public Matrix3x3 baseHipsBasis = Matrix3x3.identity;
 
 #if SAFULLBODYIK_DEBUG
 			public DebugData debugData = new DebugData();
@@ -382,9 +427,12 @@ namespace SA
 				public CachedRate01 upperSpineRotateRate = CachedRate01.zero;
 				public bool isFuzzyUpperCenterLegAndSpineRotationRate = true;
 
-				public CachedDegreesToSin upperEyesLimitThetaX = CachedDegreesToSin.zero;
-				public CachedDegreesToSin upperEyesLimitThetaYUp = CachedDegreesToSin.zero;
-				public CachedDegreesToSin upperEyesLimitThetaYDown = CachedDegreesToSin.zero;
+				public CachedDegreesToSin upperEyesLimitYaw = CachedDegreesToSin.zero;
+				public CachedDegreesToSin upperEyesLimitPitchUp = CachedDegreesToSin.zero;
+				public CachedDegreesToSin upperEyesLimitPitchDown = CachedDegreesToSin.zero;
+				public CachedDegreesToCos upperEyesTraceTheta = CachedDegreesToCos.zero;
+
+				public CachedDegreesToSin upperDirXLimitThetaY = CachedDegreesToSin.zero;
 
 				public CachedScaledValue spineLimitAngleX = CachedScaledValue.zero; // Mathf.Deg2Rad(Not sin)
 				public CachedScaledValue spineLimitAngleY = CachedScaledValue.zero; // Mathf.Deg2Rad(Not sin)
@@ -415,9 +463,6 @@ namespace SA
 						upperSpineTranslateRate._Reset( Mathf.Max( settingsBodyIK.upperCenterLegTranslateRate, settingsBodyIK.upperSpineTranslateRate ) );
 					}
 
-					if( upperPreTranslateRate._value != settingsBodyIK.upperPreTranslateRate ) {
-						upperPreTranslateRate._Reset( settingsBodyIK.upperPreTranslateRate );
-					}
 					if( upperPostTranslateRate._value != settingsBodyIK.upperPostTranslateRate ) {
 						upperPostTranslateRate._Reset( settingsBodyIK.upperPostTranslateRate );
 					}
@@ -429,14 +474,17 @@ namespace SA
 						isFuzzyUpperCenterLegAndSpineRotationRate = IsFuzzy( upperCenterLegRotateRate.value, upperSpineRotateRate.value );
 					}
 
-					if( upperEyesLimitThetaX._degrees != settingsBodyIK.upperEyesLimitAngleX ) {
-						upperEyesLimitThetaX._Reset( settingsBodyIK.upperEyesLimitAngleX );
+					if( upperEyesLimitYaw._degrees != settingsBodyIK.upperEyesLimitYaw ) {
+						upperEyesLimitYaw._Reset( settingsBodyIK.upperEyesLimitYaw );
 					}
-					if( upperEyesLimitThetaYUp._degrees != settingsBodyIK.upperEyesLimitAngleYUp ) {
-						upperEyesLimitThetaYUp._Reset( settingsBodyIK.upperEyesLimitAngleYUp );
+					if( upperEyesLimitPitchUp._degrees != settingsBodyIK.upperEyesLimitPitchUp ) {
+						upperEyesLimitPitchUp._Reset( settingsBodyIK.upperEyesLimitPitchUp );
 					}
-					if( upperEyesLimitThetaYDown._degrees != settingsBodyIK.upperEyesLimitAngleYDown ) {
-						upperEyesLimitThetaYDown._Reset( settingsBodyIK.upperEyesLimitAngleYDown );
+					if( upperEyesLimitPitchDown._degrees != settingsBodyIK.upperEyesLimitPitchDown ) {
+						upperEyesLimitPitchDown._Reset( settingsBodyIK.upperEyesLimitPitchDown );
+					}
+					if( upperEyesTraceTheta._degrees != settingsBodyIK.upperEyesTraceAngle ) {
+						upperEyesTraceTheta._Reset( settingsBodyIK.upperEyesTraceAngle );
 					}
 
 					if( spineLimitAngleX._a != settingsBodyIK.spineLimitAngleX ) {
@@ -445,6 +493,9 @@ namespace SA
 					if( spineLimitAngleY._a != settingsBodyIK.spineLimitAngleY ) {
 						spineLimitAngleY._Reset( settingsBodyIK.spineLimitAngleY, Mathf.Deg2Rad );
 					}
+					if( upperDirXLimitThetaY._degrees != settingsBodyIK.upperDirXLimitAngleY ) {
+						upperDirXLimitThetaY._Reset( settingsBodyIK.upperDirXLimitAngleY );
+                    }
 
 					if( upperContinuousPreTranslateRate._value != settingsBodyIK.upperContinuousPreTranslateRate ) {
 						upperContinuousPreTranslateRate._Reset( settingsBodyIK.upperContinuousPreTranslateRate );
@@ -473,6 +524,11 @@ namespace SA
 
 				public CachedDegreesToSin elbowFrontInnerLimitTheta = CachedDegreesToSin.zero;
 				public CachedDegreesToSin elbowBackInnerLimitTheta = CachedDegreesToSin.zero;
+
+				public CachedDegreesToSin footLimitYawTheta = CachedDegreesToSin.zero;
+				public CachedDegreesToSin footLimitPitchUpTheta = CachedDegreesToSin.zero;
+				public CachedDegreesToSin footLimitPitchDownTheta = CachedDegreesToSin.zero;
+				public CachedDegreesToSin footLimitRollTheta = CachedDegreesToSin.zero;
 
 				public void Update( Settings.LimbIK settingsLimbIK )
 				{
@@ -505,11 +561,81 @@ namespace SA
 					if( elbowBackInnerLimitTheta._degrees != settingsLimbIK.elbowBackInnerLimitAngle ) {
 						elbowBackInnerLimitTheta._Reset( settingsLimbIK.elbowBackInnerLimitAngle );
 					}
+
+					if( footLimitYawTheta._degrees != settingsLimbIK.footLimitYaw ) {
+						footLimitYawTheta._Reset( settingsLimbIK.footLimitYaw );
+					}
+					if( footLimitPitchUpTheta._degrees != settingsLimbIK.footLimitPitchUp ) {
+						footLimitPitchUpTheta._Reset( settingsLimbIK.footLimitPitchUp );
+					}
+					if( footLimitPitchDownTheta._degrees != settingsLimbIK.footLimitPitchDown ) {
+						footLimitPitchDownTheta._Reset( settingsLimbIK.footLimitPitchDown );
+					}
+					if( footLimitRollTheta._degrees != settingsLimbIK.footLimitRoll ) {
+						footLimitRollTheta._Reset( settingsLimbIK.footLimitRoll );
+					}
+				}
+			}
+
+			public class HeadIK
+			{
+				public CachedDegreesToSin neckLimitPitchUpTheta = CachedDegreesToSin.zero;
+				public CachedDegreesToSin neckLimitPitchDownTheta = CachedDegreesToSin.zero;
+				public CachedDegreesToSin neckLimitRollTheta = CachedDegreesToSin.zero;
+
+				public CachedDegreesToSin headLimitYawTheta = CachedDegreesToSin.zero;
+				public CachedDegreesToSin headLimitPitchUpTheta = CachedDegreesToSin.zero;
+				public CachedDegreesToSin headLimitPitchDownTheta = CachedDegreesToSin.zero;
+				public CachedDegreesToSin headLimitRollTheta = CachedDegreesToSin.zero;
+
+				public CachedDegreesToCos eyesTraceTheta = CachedDegreesToCos.zero;
+
+				public CachedDegreesToSin eyesLimitYawTheta = CachedDegreesToSin.zero;
+				public CachedDegreesToSin eyesLimitPitchTheta = CachedDegreesToSin.zero;
+
+				public void Update( Settings.HeadIK settingsHeadIK )
+				{
+					Assert( settingsHeadIK != null );
+
+					if( neckLimitPitchUpTheta._degrees != settingsHeadIK.neckLimitPitchUp ) {
+						neckLimitPitchUpTheta._Reset( settingsHeadIK.neckLimitPitchUp );
+					}
+					if( neckLimitPitchDownTheta._degrees != settingsHeadIK.neckLimitPitchDown ) {
+						neckLimitPitchDownTheta._Reset( settingsHeadIK.neckLimitPitchDown );
+					}
+					if( neckLimitRollTheta._degrees != settingsHeadIK.neckLimitRoll ) {
+						neckLimitRollTheta._Reset( settingsHeadIK.neckLimitRoll );
+					}
+
+					if( headLimitYawTheta._degrees != settingsHeadIK.headLimitYaw ) {
+						headLimitYawTheta._Reset( settingsHeadIK.headLimitYaw );
+					}
+					if( headLimitPitchUpTheta._degrees != settingsHeadIK.headLimitPitchUp ) {
+						headLimitPitchUpTheta._Reset( settingsHeadIK.headLimitPitchUp );
+					}
+					if( headLimitPitchDownTheta._degrees != settingsHeadIK.headLimitPitchDown ) {
+						headLimitPitchDownTheta._Reset( settingsHeadIK.headLimitPitchDown );
+					}
+					if( headLimitRollTheta._degrees != settingsHeadIK.headLimitRoll ) {
+						headLimitRollTheta._Reset( settingsHeadIK.headLimitRoll );
+					}
+					
+					if( eyesTraceTheta._degrees != settingsHeadIK.eyesTraceAngle ) {
+						eyesTraceTheta._Reset( settingsHeadIK.eyesTraceAngle );
+					}
+
+					if( eyesLimitYawTheta._degrees != settingsHeadIK.eyesLimitYaw ) {
+						eyesLimitYawTheta._Reset( settingsHeadIK.eyesLimitYaw );
+					}
+					if( eyesLimitPitchTheta._degrees != settingsHeadIK.eyesLimitPitch ) {
+						eyesLimitPitchTheta._Reset( settingsHeadIK.eyesLimitPitch );
+					}
 				}
 			}
 
 			public BodyIK bodyIK = new BodyIK();
 			public LimbIK limbIK = new LimbIK();
+			public HeadIK headIK = new HeadIK();
 		}
 
 		// Memo: Not Serializable
@@ -629,12 +755,14 @@ namespace SA
 		HeadIK _headIK;
 		FingerIK[] _fingerIK = new FingerIK[(int)FingerIKType.Max];
 
+		bool _isNeedFixShoulderWorldTransform;
+
 		bool _isPrefixed;
 		bool _isPrepared;
 		[SerializeField]
 		bool _isPrefixedAtLeastOnce;
 
-		public void Initialize( Transform rootTransorm_ )
+		public void Awake( Transform rootTransorm_ )
 		{
 			if( rootTransform != rootTransorm_ ) {
 				rootTransform = rootTransorm_;
@@ -660,13 +788,15 @@ namespace SA
 
 		public void Destroy()
 		{
+#if UNITY_EDITOR
 			if( _effectors != null ) {
 				for( int i = 0; i < _effectors.Length; ++i ) {
-					if( _effectors[i].transform != null ) {
+					if( _effectors[i] != null && _effectors[i].transform != null ) {
 						GameObject.DestroyImmediate( _effectors[i].transform.gameObject );
 					}
                 }
 			}
+#endif
 		}
 
 		static void _SetBoneTransform( ref Bone bone, Transform transform )
@@ -774,6 +904,8 @@ namespace SA
 			SafeNew( ref rightArmEffectors );
 			SafeNew( ref leftLegEffectors );
 			SafeNew( ref rightLegEffectors );
+			SafeNew( ref leftHandFingersEffectors );
+			SafeNew( ref rightHandFingersEffectors );
 
 			SafeNew( ref settings );
 			SafeNew( ref editorSettings );
@@ -864,37 +996,12 @@ namespace SA
 			_Prefix( ref rightHandFingersEffectors.ring, EffectorLocation.RightHandRing, rightArmEffectors.wrist, rightHandFingersBones.ring );
 			_Prefix( ref rightHandFingersEffectors.little, EffectorLocation.RightHandLittle, rightArmEffectors.wrist, rightHandFingersBones.little );
 
-			// Hidden function.
-			Assert( rootTransform != null );
-			if( rootTransform != null ) {
-				if( settings.modelTemplate == ModelTemplate.Standard ) {
-					var animator = rootTransform.GetComponent<Animator>();
-					if( animator != null ) {
-						var avatar = animator.avatar;
-						if( avatar != null ) {
-							if( avatar.name.Contains( "unitychan" ) ) {
-								settings.modelTemplate = ModelTemplate.UnityChan;
-							}
-						}
-					}
-				}
-			}
-
 			if( !_isPrefixedAtLeastOnce ) {
 				_isPrefixedAtLeastOnce = true;
-				_PresetEffectorPull( leftArmEffectors.wrist );
-				_PresetEffectorPull( rightArmEffectors.wrist );
-				_PresetEffectorPull( leftLegEffectors.foot );
-				_PresetEffectorPull( rightLegEffectors.foot );
+				for( int i = 0; i != _effectors.Length; ++i ) {
+					_effectors[i].Prefix();
+                }
 			}
-		}
-
-		static void _PresetEffectorPull( Effector effector )
-		{
-			if( effector != null ) {
-				effector.positionEnabled = true;
-				effector.pull = 1.0f;
-            }
 		}
 
 		public void CleanupBoneTransforms()
@@ -1078,7 +1185,7 @@ namespace SA
 				}
 			}
 
-			if( settings.automaticConfigureRollEnabled ) {
+			if( settings.automaticConfigureRollBonesEnabled ) {
 				var tempBones = new List<Transform>();
 
 				for( int side = 0; side != 2; ++side ) {
@@ -1146,12 +1253,12 @@ namespace SA
 
 		// - Wakeup for solvers.
 		// - Require to setup each transforms.
-		public void Prepare()
+		public bool Prepare()
 		{
 			_Prefix();
 
 			if( _isPrepared ) {
-				return;
+				return false;
 			}
 
 			_isPrepared = true;
@@ -1163,7 +1270,7 @@ namespace SA
 				internalValues.defaultRootBasisInv = internalValues.defaultRootBasis.transpose;
 				internalValues.defaultRootRotation = rootTransform.rotation;
 			}
-
+			
 			if( _bones != null ) {
 				int boneLength = _bones.Length;
 				for( int i = 0; i != boneLength; ++i ) {
@@ -1191,8 +1298,6 @@ namespace SA
 				}
 			}
 
-			_bodyIK = new BodyIK( this );
-
 			if( _limbIK == null || _limbIK.Length != (int)LimbIKLocation.Max ) {
 				_limbIK = new LimbIK[(int)LimbIKLocation.Max];
 			}
@@ -1201,6 +1306,7 @@ namespace SA
 				_limbIK[i] = new LimbIK( this, (LimbIKLocation)i );
 			}
 
+			_bodyIK = new BodyIK( this, _limbIK );
 			_headIK = new HeadIK( this );
 
 			if( _fingerIK == null || _fingerIK.Length != (int)FingerIKType.Max ) {
@@ -1210,7 +1316,23 @@ namespace SA
 			for( int i = 0; i != (int)FingerIKType.Max; ++i ) {
 				_fingerIK[i] = new FingerIK( this, (FingerIKType)i );
 			}
-		}
+
+			{
+				Bone neckBone = headBones.neck;
+				Bone leftShoulder = leftArmBones.shoulder;
+				Bone rightShoulder = rightArmBones.shoulder;
+				if( leftShoulder != null && leftShoulder.transformIsAlive &&
+					rightShoulder != null && rightShoulder.transformIsAlive &&
+					neckBone != null && neckBone.transformIsAlive ) {
+					if( leftShoulder.transform.parent == neckBone.transform &&
+						rightShoulder.transform.parent == neckBone.transform ) {
+						_isNeedFixShoulderWorldTransform = true;
+					}
+				}
+			}
+
+			return true;
+        }
 
 		bool _isAnimatorCheckedAtLeastOnce = false;
 
@@ -1250,6 +1372,7 @@ namespace SA
 
 			internalValues.bodyIK.Update( settings.bodyIK );
 			internalValues.limbIK.Update( settings.limbIK );
+			internalValues.headIK.Update( settings.headIK );
         }
 
 		bool _isSyncDisplacementAtLeastOnce = false;
@@ -1298,6 +1421,64 @@ namespace SA
 			}
 		}
 
+		// for effector._hidden_worldPosition / BodyIK
+		void _ComputeBaseHipsTransform()
+		{
+			Assert( internalValues != null );
+
+			if( bodyEffectors == null ) { // Note: bodyEffectors is public.
+				return;
+			}
+
+			Effector hipsEffector = bodyEffectors.hips;
+			if( hipsEffector == null || rootEffector == null ) {
+				return;
+			}
+
+			if( hipsEffector.rotationEnabled && hipsEffector.rotationWeight > IKEpsilon ) {
+				Quaternion hipsRotation = hipsEffector.worldRotation * Inverse( hipsEffector._defaultRotation );
+				if( hipsEffector.rotationWeight < 1.0f - IKEpsilon ) {
+					Quaternion rootRotation = rootEffector.worldRotation * Inverse( rootEffector._defaultRotation );
+					Quaternion tempRotation = Quaternion.Lerp( rootRotation, hipsRotation, hipsEffector.rotationWeight );
+					SAFBIKMatSetRot( out internalValues.baseHipsBasis, ref tempRotation );
+				} else {
+					SAFBIKMatSetRot( out internalValues.baseHipsBasis, ref hipsRotation );
+				}
+			} else {
+				Quaternion rootEffectorWorldRotation = rootEffector.worldRotation;
+				SAFBIKMatSetRotMultInv1( out internalValues.baseHipsBasis, ref rootEffectorWorldRotation, ref rootEffector._defaultRotation );
+			}
+
+			if( hipsEffector.positionEnabled && hipsEffector.positionWeight > IKEpsilon ) {
+				Vector3 hipsEffectorWorldPosition = hipsEffector.worldPosition;
+				SAFBIKMatMultVecPreSubAdd(
+					out internalValues.baseHipsPos,
+					ref internalValues.baseHipsBasis,
+					ref rootEffector._defaultPosition,
+					ref hipsEffector._defaultPosition,
+					ref hipsEffectorWorldPosition );
+				if( hipsEffector.positionWeight < 1.0f - IKEpsilon ) {
+					Vector3 rootEffectorWorldPosition = rootEffector.worldPosition;
+					Vector3 hipsPosition;
+					SAFBIKMatMultVecPreSubAdd(
+						out hipsPosition,
+						ref internalValues.baseHipsBasis,
+						ref hipsEffector._defaultPosition,
+						ref rootEffector._defaultPosition,
+						ref rootEffectorWorldPosition );
+					internalValues.baseHipsPos = Vector3.Lerp( hipsPosition, internalValues.baseHipsPos, hipsEffector.positionWeight );
+				}
+			} else {
+				Vector3 rootEffectorWorldPosition = rootEffector.worldPosition;
+				SAFBIKMatMultVecPreSubAdd(
+					out internalValues.baseHipsPos,
+					ref internalValues.baseHipsBasis,
+					ref hipsEffector._defaultPosition,
+					ref rootEffector._defaultPosition,
+					ref rootEffectorWorldPosition );
+			}
+		}
+
 		public void Update()
 		{
 			_UpdateInternalValues();
@@ -1317,24 +1498,59 @@ namespace SA
 
 			_Bones_SyncDisplacement();
 
+			if( internalValues.resetTransforms || internalValues.continuousSolverEnabled ) {
+				_ComputeBaseHipsTransform();
+            }
+
 			// Feedback bonePositions to effectorPositions.
 			// (for AnimatorEnabled only.)
 			if( _effectors != null ) {
 				int effectorLength = _effectors.Length;
 				for( int i = 0; i != effectorLength; ++i ) {
-					if( _effectors[i] != null ) {
-						_effectors[i]._hidden_worldPosition = _effectors[i].worldPosition;
+					Effector effector = _effectors[i];
+					if( effector != null ) {
+						// todo: Optimize. (for BodyIK)
 
-						if( internalValues.animatorEnabled && !internalValues.resetTransforms ) {
-							if( _effectors[i].positionEnabled && _effectors[i].positionWeight < 1.0f - IKEpsilon ) {
-								float weight = (_effectors[i].positionWeight > IKEpsilon) ? _effectors[i].positionWeight : 0.0f;
-								if( _effectors[i].bone != null && _effectors[i].bone.transformIsAlive ) {
-									_effectors[i]._hidden_worldPosition = Vector3.Lerp( _effectors[i].bone.worldPosition, _effectors[i].worldPosition, weight );
+						// LimbIK : bending / end
+						// BodyIK :  wrist / foot / neck
+						// FingerIK : nothing
+						if( effector.effectorType == EffectorType.Eyes ||
+							effector.effectorType == EffectorType.HandFinger ) { // Optimize.
+#if SAFULLBODYIK_DEBUG
+							effector._hidden_worldPosition = new Vector3();
+#endif
+						} else {
+							float weight = effector.positionEnabled ? effector.positionWeight : 0.0f;
+							Vector3 destPosition = (weight > IKEpsilon) ? effector.worldPosition : new Vector3();
+							if( weight < 1.0f - IKEpsilon ) {
+								Vector3 sourcePosition = destPosition; // Failsafe.
+								if( !internalValues.animatorEnabled && (internalValues.resetTransforms || internalValues.continuousSolverEnabled) ) {
+									if( effector.effectorLocation == EffectorLocation.Hips ) {
+										sourcePosition = internalValues.baseHipsPos; // _ComputeBaseHipsTransform()
+									} else {
+										Effector hipsEffector = (bodyEffectors != null) ? bodyEffectors.hips : null;
+										if( hipsEffector != null ) {
+											SAFBIKMatMultVecPreSubAdd(
+												out sourcePosition,
+												ref internalValues.baseHipsBasis,
+												ref effector._defaultPosition,
+												ref hipsEffector._defaultPosition,
+												ref internalValues.baseHipsPos );
+                                        }
+									}
+								} else { // for Animation.
+									if( effector.bone != null && effector.bone.transformIsAlive ) {
+										sourcePosition = effector.bone.worldPosition;
+									}
 								}
-							} else if( !_effectors[i].positionEnabled ) {
-								if( _effectors[i].bone != null && _effectors[i].bone.transformIsAlive ) {
-									_effectors[i]._hidden_worldPosition = _effectors[i].bone.worldPosition;
+
+								if( weight > IKEpsilon ) {
+									effector._hidden_worldPosition = Vector3.Lerp( sourcePosition, destPosition, weight );
+								} else {
+									effector._hidden_worldPosition = sourcePosition;
 								}
+							} else {
+								effector._hidden_worldPosition = destPosition;
 							}
 						}
 					}
@@ -1357,10 +1573,17 @@ namespace SA
 				}
 			}
 
+			// todo: Force overwrite _hidden_worldPosition (LimbIK, arms)
+
+			// settings.
+			//		public bool legAlwaysSolveEnabled = true;
+			//		public bool armAlwaysSolveEnabled = false;
+
 			if( _limbIK != null || _headIK != null ) {
 				_Bones_PrepareUpdate();
 
 				bool isSolved = false;
+				bool isHeadSolved = false;
 				if( _limbIK != null ) {
 					int limbIKLength = _limbIK.Length;
 					for( int i = 0; i != limbIKLength; ++i ) {
@@ -1370,8 +1593,17 @@ namespace SA
 					}
 				}
 				if( _headIK != null ) {
-					_headIK.Solve();
-					isSolved = true;
+					isHeadSolved = _headIK.Solve( this );
+					isSolved |= isHeadSolved;
+                }
+
+				if( isHeadSolved && _isNeedFixShoulderWorldTransform ) {
+					if( leftArmBones.shoulder != null ) {
+						leftArmBones.shoulder.forcefix_worldRotation();
+					}
+					if( rightArmBones.shoulder != null ) {
+						rightArmBones.shoulder.forcefix_worldRotation();
+					}
 				}
 
 				if( isSolved ) {
@@ -1484,7 +1716,7 @@ namespace SA
 			}
 
 			if( bone.boneType == BoneType.Eye ) {
-				if( settings.modelTemplate == ModelTemplate.UnityChan ) {
+				if( _IsHiddenCustomEyes() ) {
 					return;
 				}
 			}
@@ -1658,6 +1890,27 @@ namespace SA
 			Assert( _effectors != null );
 			bool createEffectorTransform = this.settings.createEffectorTransform;
 			Effector.Prefix( _effectors, ref effector, effectorLocation, createEffectorTransform, null, parentEffector, bone, leftBone, rightBone );
+		}
+
+		//----------------------------------------------------------------------------------------------------------------------------
+
+		// Custom Solver.
+		public virtual bool _IsHiddenCustomEyes()
+		{
+			return false;
+		}
+
+		public virtual bool _PrepareCustomEyes( ref Quaternion headToLeftEyeRotation, ref Quaternion headToRightEyeRotation )
+		{
+			return false;
+		}
+
+		public virtual void _ResetCustomEyes()
+		{
+		}
+
+		public virtual void _SolveCustomEyes( ref Matrix3x3 neckBasis, ref Matrix3x3 headBasis, ref Matrix3x3 headBaseBasis )
+		{
 		}
 	}
 }

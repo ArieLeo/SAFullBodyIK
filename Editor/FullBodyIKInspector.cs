@@ -1,6 +1,6 @@
 ﻿// Copyright (c) 2016 Nora
 // Released under the MIT license
-// http://opensource.org/licenses/mit-license.phpusing
+// http://opensource.org/licenses/mit-license.php
 using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
@@ -8,8 +8,7 @@ using EditorUtil = SA.FullBodyIKEditorUtility;
 
 namespace SA
 {
-	[CustomEditor( typeof( SA.FullBodyIKBehaviour ) )]
-	public class FullBodyIKInspector : Editor
+	public class FullBodyIKInspectorBase : Editor
 	{
 		bool _initializedGUIStyle;
 		GUIStyle _guiStyle_header;
@@ -76,7 +75,7 @@ namespace SA
 		void _BoneField( string boneName, ref FullBodyIK.Bone bone, bool isOptional )
 		{
 			FullBodyIK.SafeNew( ref bone );
-			var fbik = this.target as FullBodyIKBehaviour;
+			var fbik = this.target as FullBodyIKBehaviourBase;
 			EditorGUILayout.BeginHorizontal();
 			if( bone.transform == null ) {
 				if( isOptional ) {
@@ -112,7 +111,7 @@ namespace SA
 
 		void _EffectorField( string effectorName, ref FullBodyIK.Effector effector )
 		{
-			var fbik = this.target as FullBodyIKBehaviour;
+			var fbik = this.target as FullBodyIKBehaviourBase;
 			var editorSettings = fbik.fullBodyIK.editorSettings;
 
 			if( effector == null ) {
@@ -130,7 +129,7 @@ namespace SA
 
 				EditorGUILayout.LabelField( "Pos", GUILayout.Width( labelSpace ) );
 				EditorUtil.GUI.ToggleLegacy( fbik, "", ref effector.positionEnabled );
-				EditorUtil.GUI.PushEnabled( effector.positionEnabled  );
+				EditorUtil.GUI.PushEnabled( effector.positionEnabled );
 				EditorUtil.GUI.HorizonalSlider( fbik, ref effector.positionWeight, 0.0f, 1.0f, GUILayout.ExpandWidth( false ), GUILayout.Width( 30.0f ) );
 				EditorUtil.GUI.PushEnabled( effector.pullContained );
 				EditorGUILayout.LabelField( "Pull", GUILayout.Width( labelSpace ) );
@@ -138,10 +137,10 @@ namespace SA
 				EditorUtil.GUI.PopEnabled();
 				EditorUtil.GUI.PopEnabled();
 
-				EditorUtil.GUI.PushEnabled( effector.rotationContained  );
+				EditorUtil.GUI.PushEnabled( effector.rotationContained );
 				EditorGUILayout.LabelField( "Rot", GUILayout.Width( labelSpace ) );
 				EditorUtil.GUI.ToggleLegacy( fbik, "", ref effector.rotationEnabled );
-				EditorUtil.GUI.PushEnabled( effector.rotationEnabled  );
+				EditorUtil.GUI.PushEnabled( effector.rotationEnabled );
 				EditorUtil.GUI.HorizonalSlider( fbik, ref effector.rotationWeight, 0.0f, 1.0f, GUILayout.ExpandWidth( false ), GUILayout.Width( 30.0f ) );
 				EditorUtil.GUI.PopEnabled();
 				EditorUtil.GUI.PopEnabled();
@@ -149,17 +148,12 @@ namespace SA
 			GUILayout.EndHorizontal();
 		}
 
-		bool _isPrefixed;
-
 		public override void OnInspectorGUI()
 		{
 			_Initialize();
 
-			var fbik = this.target as FullBodyIKBehaviour;
-			if( !_isPrefixed ) {
-				_isPrefixed = true;
-                fbik.Prefix();
-			}
+			var fbik = this.target as FullBodyIKBehaviourBase;
+			fbik.Prefix();
 
 			var editorSettings = fbik.fullBodyIK.editorSettings;
 
@@ -173,7 +167,9 @@ namespace SA
 			EditorUtil.GUI.Toolbar( fbik, ref editorSettings.toolbarSelected, toolbarContents );
 			GUILayout.FlexibleSpace();
 			GUILayout.EndHorizontal();
-			
+
+
+
 			switch( editorSettings.toolbarSelected ) {
 			case 0:
 				_OnInspectorGUI_Basic();
@@ -189,7 +185,7 @@ namespace SA
 
 		void _OnInspectorGUI_Basic()
 		{
-			var fbik = this.target as FullBodyIKBehaviour;
+			var fbik = this.target as FullBodyIKBehaviourBase;
 			var settings = fbik.fullBodyIK.settings;
 			var editorSettings = fbik.fullBodyIK.editorSettings;
 			var internalValues = fbik.fullBodyIK.internalValues;
@@ -199,20 +195,22 @@ namespace SA
 				settings.resetTransforms = (FullBodyIK.AutomaticBool)EditorGUILayout.EnumPopup( "Reset Transforms", settings.resetTransforms );
 				settings.syncDisplacement = (FullBodyIK.SyncDisplacement)EditorGUILayout.EnumPopup( "Sync Displcement", settings.syncDisplacement );
 
+				settings.shoulderDirYAsNeck = (FullBodyIK.AutomaticBool)EditorGUILayout.EnumPopup( "Shoulder DirY As Neck", settings.shoulderDirYAsNeck );
+
 				EditorUtil.GUI.Field( "Automatic Prepare Humanoid", ref settings.automaticPrepareHumanoid );
 				EditorUtil.GUI.Field( "Automatic Configure Spine Enabled", ref settings.automaticConfigureSpineEnabled );
-				EditorUtil.GUI.Field( "Automatic Configure Roll Enabled", ref settings.automaticConfigureRollEnabled );
-				EditorUtil.GUI.Field( "Roll Enabled", ref settings.rollEnabled );
-				
-                settings.modelTemplate = (FullBodyIK.ModelTemplate)EditorGUILayout.EnumPopup( "Model Template", settings.modelTemplate );
+				EditorUtil.GUI.Field( "Automatic Configure Roll Bones Enabled", ref settings.automaticConfigureRollBonesEnabled );
+				EditorUtil.GUI.Field( "Roll Bones Enabled", ref settings.rollBonesEnabled );
 
 				_Header( "BodyIK" );
 
+				EditorUtil.GUI.Field( "Force Solve Enabled", ref settings.bodyIK.forceSolveEnabled );
 				EditorUtil.GUI.Field( "Upper Solve Enabled", ref settings.bodyIK.upperSolveEnabled );
 				EditorUtil.GUI.Field( "Lower Solve Enabled", ref settings.bodyIK.lowerSolveEnabled );
 				EditorUtil.GUI.Field( "Compute World Transform", ref settings.bodyIK.computeWorldTransform );
 
 				EditorUtil.GUI.Field( "Shoulder Solve Enabled", ref settings.bodyIK.shoulderSolveEnabled );
+				EditorUtil.GUI.Slider( "Shoulder Solve Bending Rate", ref settings.bodyIK.shoulderSolveBendingRate, 0.0f, 1.0f );
 				EditorUtil.GUI.Field( "Shoulder Limit Enabled", ref settings.bodyIK.shoulderLimitEnabled );
 				EditorUtil.GUI.Field( "Shoulder Limit Angle YPlus", ref settings.bodyIK.shoulderLimitAngleYPlus );
 				EditorUtil.GUI.Field( "Shoulder Limit Angle YMinus", ref settings.bodyIK.shoulderLimitAngleYMinus );
@@ -228,18 +226,23 @@ namespace SA
 				EditorUtil.GUI.Slider01( "Spine DirX Leg To Arm To Rate", ref settings.bodyIK.spineDirXLegToArmToRate );
 				EditorUtil.GUI.Slider01( "Spine DirY Lerp Rate", ref settings.bodyIK.spineDirYLerpRate );
 
+				EditorUtil.GUI.Slider01( "Upper Body Movingfix Rate", ref settings.bodyIK.upperBodyMovingfixRate );
+				EditorUtil.GUI.Slider01( "Upper Head Movingfix Rate", ref settings.bodyIK.upperHeadMovingfixRate );
 				EditorUtil.GUI.Slider01( "Upper CenterLeg Translate Rate", ref settings.bodyIK.upperCenterLegTranslateRate );
 				EditorUtil.GUI.Slider01( "Upper Spine Translate Rate", ref settings.bodyIK.upperSpineTranslateRate );
-				//EditorUtil.GUI.Slider01( "Upper PreTranslate Rate", ref settings.bodyIK.upperPreTranslateRate );
 				EditorUtil.GUI.Slider01( "Upper CenterLeg Rotate Rate", ref settings.bodyIK.upperCenterLegRotateRate );
 				EditorUtil.GUI.Slider01( "Upper Spine Rotate Rate", ref settings.bodyIK.upperSpineRotateRate );
 				EditorUtil.GUI.Slider01( "Upper PostTranslate Rate", ref settings.bodyIK.upperPostTranslateRate );
 				EditorUtil.GUI.Slider01( "Upper CenterLeg Lerp Rate", ref settings.bodyIK.upperCenterLegLerpRate );
 				EditorUtil.GUI.Slider01( "Upper Spine Lerp Rate", ref settings.bodyIK.upperSpineLerpRate );
 
+				GUILayout.Label( "Upper DirX", _guiStyle_section );
+				EditorUtil.GUI.Field( "Upper DirX Limit Enabled", ref settings.bodyIK.upperDirXLimitEnabled );
+				EditorUtil.GUI.Slider( "Upper DirX Limit Angle Y", ref settings.bodyIK.upperDirXLimitAngleY, 0.0f, 89.99f );
+
 				GUILayout.Label( "Spine", _guiStyle_section );
 				EditorUtil.GUI.Field( "Spine Limit Enabled", ref settings.bodyIK.spineLimitEnabled );
-				EditorUtil.GUI.Field( "Spine Limit Accurate Enabled", ref settings.bodyIK.spineLimitAccurateEnabled );
+				EditorUtil.GUI.Field( "Spine Accurate Limit Enabled", ref settings.bodyIK.spineAccurateLimitEnabled );
 				EditorUtil.GUI.Slider( "Spine Limit Angle X", ref settings.bodyIK.spineLimitAngleX, 0.0f, 89.99f );
 				EditorUtil.GUI.Slider( "Spine Limit Angle Y", ref settings.bodyIK.spineLimitAngleY, 0.0f, 89.99f );
 
@@ -257,12 +260,13 @@ namespace SA
 				GUILayout.Label( "Eyes", _guiStyle_section );
 				EditorUtil.GUI.Slider01( "Upper Eyes To CenterLeg Rate", ref settings.bodyIK.upperEyesToCenterLegRate );
 				EditorUtil.GUI.Slider01( "Upper Eyes To Spine Rate", ref settings.bodyIK.upperEyesToSpineRate );
-				EditorUtil.GUI.Slider01( "Upper Eyes Rate YUp", ref settings.bodyIK.upperEyesRateYUp );
-				EditorUtil.GUI.Slider01( "Upper Eyes Rate YDown", ref settings.bodyIK.upperEyesRateYDown );
-				EditorUtil.GUI.Slider( "Upper Eyes Limit Angle X", ref settings.bodyIK.upperEyesLimitAngleX, 0.0f, 89.99f );
-				EditorUtil.GUI.Slider( "Upper Eyes Limit Angle YUp", ref settings.bodyIK.upperEyesLimitAngleYUp, 0.0f, 89.99f );
-				EditorUtil.GUI.Slider( "Upper Eyes Limit Angle YDown", ref settings.bodyIK.upperEyesLimitAngleYDown, 0.0f, 89.99f );
-				EditorUtil.GUI.Slider( "Upper Eyes Back Offset Z", ref settings.bodyIK.upperEyesBackOffsetZ, 0.0f, 0.99f );
+				EditorUtil.GUI.Slider01( "Upper Eyes Yaw Rate", ref settings.bodyIK.upperEyesYawRate );
+				EditorUtil.GUI.Slider01( "Upper Eyes Pitch Up Rate", ref settings.bodyIK.upperEyesPitchUpRate );
+				EditorUtil.GUI.Slider01( "Upper Eyes Pitch Down Rate", ref settings.bodyIK.upperEyesPitchDownRate );
+				EditorUtil.GUI.Slider( "Upper Eyes Limit Yaw", ref settings.bodyIK.upperEyesLimitYaw, 0.0f, 89.99f );
+				EditorUtil.GUI.Slider( "Upper Eyes Limit Pitch Up", ref settings.bodyIK.upperEyesLimitPitchUp, 0.0f, 89.99f );
+				EditorUtil.GUI.Slider( "Upper Eyes Limit Pitch Down", ref settings.bodyIK.upperEyesLimitPitchDown, 0.0f, 89.99f );
+				EditorUtil.GUI.Slider( "Upper Eyes Trace Angle", ref settings.bodyIK.upperEyesTraceAngle, 90.0f, 180.0f );
 
 				_Header( "LimbIK" );
 
@@ -296,6 +300,10 @@ namespace SA
 				EditorUtil.GUI.Slider01( "Arm Basis Forcefix Effector Length Rate", ref settings.limbIK.armBasisForcefixEffectorLengthRate );
 				EditorUtil.GUI.Slider01( "Arm Basis Forcefix Effector Length Lerp Rate", ref settings.limbIK.armBasisForcefixEffectorLengthLerpRate );
 
+				GUILayout.Label( "Arm effector fixes(Automatic)", _guiStyle_section );
+				EditorUtil.GUI.Field( "Arm Effector Backfix Enabled", ref settings.limbIK.armEffectorBackfixEnabled );
+				EditorUtil.GUI.Field( "Arm Effector Innerfix Enabled", ref settings.limbIK.armEffectorInnerfixEnabled );
+
 				GUILayout.Label( "Arm back area(Automatic, XZ)", _guiStyle_section );
 				EditorUtil.GUI.Slider( "Arm Effector Back Begin Angle", ref settings.limbIK.armEffectorBackBeginAngle, -90.00f, 45.0f );
 				EditorUtil.GUI.Slider( "Arm Effector Back Core Begin Angle", ref settings.limbIK.armEffectorBackCoreBeginAngle, -90.00f, 45.0f );
@@ -316,6 +324,29 @@ namespace SA
 				GUILayout.Label( "Arm elbow limit angle(Automatic, Manual)", _guiStyle_section );
 				EditorUtil.GUI.Slider( "Elbow Front Inner Limit Angle", ref settings.limbIK.elbowFrontInnerLimitAngle, 0.0f, 90.0f );
 				EditorUtil.GUI.Slider( "Elbow Back Inner Limit Angle", ref settings.limbIK.elbowBackInnerLimitAngle, 0.0f, 90.0f );
+
+				GUILayout.Label( "Wrist limit", _guiStyle_section );
+				EditorUtil.GUI.Field( "Wrist Limit Enabled", ref settings.limbIK.wristLimitEnabled );
+				EditorUtil.GUI.Slider( "Wrist Limit Angle", ref settings.limbIK.wristLimitAngle, 0.0f, 180.0f );
+
+				GUILayout.Label( "Foot limit", _guiStyle_section );
+				EditorUtil.GUI.Slider( "Foot Limit Yaw", ref settings.limbIK.footLimitYaw, 0.0f, 89.99f );
+				EditorUtil.GUI.Slider( "Foot Limit Pitch Up", ref settings.limbIK.footLimitPitchUp, 0.0f, 89.99f );
+				EditorUtil.GUI.Slider( "Foot Limit Pitch Down", ref settings.limbIK.footLimitPitchDown, 0.0f, 89.99f );
+				EditorUtil.GUI.Slider( "Foot Limit Roll", ref settings.limbIK.footLimitRoll, 0.0f, 89.99f );
+
+				_Header( "HeadIK" );
+				EditorUtil.GUI.Slider( "Neck Limit Pitch Up", ref settings.headIK.neckLimitPitchUp, 0.0f, 89.99f );
+				EditorUtil.GUI.Slider( "Neck Limit Pitch Down", ref settings.headIK.neckLimitPitchDown, 0.0f, 89.99f );
+				EditorUtil.GUI.Slider( "Neck Limit Roll", ref settings.headIK.neckLimitRoll, 0.0f, 89.99f );
+				EditorUtil.GUI.Slider( "Eyes To Neck Pitch Rate", ref settings.headIK.eyesToNeckPitchRate, 0.0f, 1.0f );
+				EditorUtil.GUI.Slider( "Head Limit Yaw", ref settings.headIK.headLimitYaw, 0.0f, 89.99f );
+				EditorUtil.GUI.Slider( "Head Limit Pitch Up", ref settings.headIK.headLimitPitchUp, 0.0f, 89.99f );
+				EditorUtil.GUI.Slider( "Head Limit Pitch Down", ref settings.headIK.headLimitPitchDown, 0.0f, 89.99f );
+				EditorUtil.GUI.Slider( "Head Limit Roll", ref settings.headIK.headLimitRoll, 0.0f, 89.99f );
+				EditorUtil.GUI.Slider( "Eyes To Head Yaw Rate", ref settings.headIK.eyesToHeadYawRate, 0.0f, 1.0f );
+				EditorUtil.GUI.Slider( "Eyes To Head Pitch Rate", ref settings.headIK.eyesToHeadPitchRate, 0.0f, 1.0f );
+				EditorUtil.GUI.Slider( "Eyes Trace Angle", ref settings.headIK.eyesTraceAngle, 90.0f, 180.0f );
 			}
 
 #if SAFULLBODYIK_DEBUG
@@ -347,7 +378,7 @@ namespace SA
 
 		void _OnInspectorGUI_Bones()
 		{
-			var fbik = this.target as FullBodyIKBehaviour;
+			var fbik = this.target as FullBodyIKBehaviourBase;
 			var bodyBones = fbik.fullBodyIK.bodyBones;
 			var headBones = fbik.fullBodyIK.headBones;
 			var leftLegBones = fbik.fullBodyIK.leftLegBones;
@@ -453,10 +484,10 @@ namespace SA
 
 			EditorGUILayout.EndScrollView();
 		}
-		
+
 		void _OnInspectorGUI_Effectors()
 		{
-			var fbik = this.target as FullBodyIKBehaviour;
+			var fbik = this.target as FullBodyIKBehaviourBase;
 			var editorSettings = fbik.fullBodyIK.editorSettings;
 			var bodyEffectors = fbik.fullBodyIK.bodyEffectors;
 			var headEffectors = fbik.fullBodyIK.headEffectors;
@@ -490,7 +521,7 @@ namespace SA
 			EditorGUILayout.Separator();
 
 			_scrollViewPos_Effectors = EditorGUILayout.BeginScrollView( _scrollViewPos_Effectors );
-			
+
 			EditorGUILayout.Separator();
 			_Header( "Body" );
 			_EffectorField( "Hips", ref bodyEffectors.hips );
@@ -534,21 +565,26 @@ namespace SA
 
 			EditorGUILayout.EndScrollView();
 		}
-		
+
 		void _ConfigureHumanoidBones()
 		{
 		}
-		
+
 		void _ResetBones()
 		{
 		}
-		
+
 		void _PrepareEffectorTransforms()
 		{
 		}
-		
+
 		void _ResetEffectorTransforms()
 		{
 		}
+	}
+
+	[CustomEditor( typeof( SA.FullBodyIKBehaviour ) )]
+	public class FullBodyIKInspector : FullBodyIKInspectorBase
+	{
 	}
 }

@@ -1,6 +1,6 @@
 ﻿// Copyright (c) 2016 Nora
 // Released under the MIT license
-// http://opensource.org/licenses/mit-license.phpusing
+// http://opensource.org/licenses/mit-license.php
 
 #if SAFULLBODYIK_DEBUG
 //#define _FORCE_CANCEL_FEEDBACK_WORLDTRANSFORM
@@ -52,7 +52,7 @@ namespace SA
 			_EffectorFlags _effectorFlags = _EffectorFlags.None;
 
 			// These aren't serialize field.
-			// Memo: If this instance is cloned, will be cloned these properties, too.
+			// Memo: If this instance is cloned, will be copyed these properties, too.
 			Effector _parentEffector = null;
 			Bone _bone = null; // Hips : Hips Eyes : Head
 			Bone _leftBone = null; // Hips : LeftLeg Eyes : LeftEye Others : null
@@ -97,6 +97,8 @@ namespace SA
 			bool _isWrittenWorldPosition = false;
 			bool _isWrittenWorldRotation = false;
 
+			bool _isHiddenEyes = false;
+
 			int _transformIsAlive = -1;
 
 			public string name {
@@ -129,16 +131,13 @@ namespace SA
 				}
 			}
 			
-			// Call from Serializer.
-			public static Effector Preset( EffectorLocation effectorLocation )
+			public void Prefix()
 			{
-				Effector effector = new Effector();
-				effector._PresetEffectorLocation( effectorLocation );
-				effector.positionEnabled = _GetPresetPositionEnabled( effector._effectorType );
-				effector.pull = _GetPresetPull( effector._effectorType );
-				return effector;
+				positionEnabled = _GetPresetPositionEnabled( _effectorType );
+				positionWeight = _GetPresetPositionWeight( _effectorType );
+				pull = _GetPresetPull( _effectorType );
 			}
-			
+
 			void _PresetEffectorLocation( EffectorLocation effectorLocation )
 			{
 				_isPresetted = true;
@@ -194,9 +193,21 @@ namespace SA
 				return false;
 			}
 
+			static float _GetPresetPositionWeight( EffectorType effectorType )
+			{
+				switch( effectorType ) {
+				case EffectorType.Arm:		return 0.0f;
+				}
+
+				return 1.0f;
+			}
+
 			static float _GetPresetPull( EffectorType effectorType )
 			{
 				switch( effectorType ) {
+				case EffectorType.Hips:		return 1.0f;
+				case EffectorType.Eyes:		return 1.0f;
+				case EffectorType.Arm:		return 1.0f;
 				case EffectorType.Wrist:	return 1.0f;
 				case EffectorType.Foot:		return 1.0f;
 				}
@@ -208,9 +219,14 @@ namespace SA
 			{
 				switch( effectorType ) {
 				case EffectorType.Hips:		return _EffectorFlags.RotationContained | _EffectorFlags.PullContained;
-				case EffectorType.Head:		return _EffectorFlags.RotationContained;
+				case EffectorType.Neck:		return _EffectorFlags.PullContained;
+				case EffectorType.Head:		return _EffectorFlags.RotationContained | _EffectorFlags.PullContained;
+				case EffectorType.Eyes:		return _EffectorFlags.PullContained;
+				case EffectorType.Arm:		return _EffectorFlags.PullContained;
 				case EffectorType.Wrist:	return _EffectorFlags.RotationContained | _EffectorFlags.PullContained;
 				case EffectorType.Foot:		return _EffectorFlags.RotationContained | _EffectorFlags.PullContained;
+				case EffectorType.Elbow:	return _EffectorFlags.PullContained;
+				case EffectorType.Knee:		return _EffectorFlags.PullContained;
 				}
 				
 				return _EffectorFlags.None;
@@ -306,8 +322,8 @@ namespace SA
 					}
 				} else if( _effectorType == EffectorType.Eyes ) {
 					Assert( _bone != null );
-					bool isLegacy = (fullBodyIK.settings.modelTemplate == ModelTemplate.UnityChan);
-					if( !isLegacy && _bone != null && _bone.transformIsAlive &&
+					_isHiddenEyes = fullBodyIK._IsHiddenCustomEyes();
+					if( !_isHiddenEyes && _bone != null && _bone.transformIsAlive &&
 						_leftBone != null && _leftBone.transformIsAlive &&
 						_rightBone != null && _rightBone.transformIsAlive ) {
 						// _bone ... Head / _leftBone ... LeftEye / _rightBone ... RightEye
@@ -373,7 +389,27 @@ namespace SA
 
 			public Vector3 bone_worldPosition {
 				get {
-					if( _isSimulateFingerTips ) {
+					if( _effectorType == EffectorType.Eyes ) {
+						if( !_isHiddenEyes && _bone != null && _bone.transformIsAlive &&
+							_leftBone != null && _leftBone.transformIsAlive &&
+							_rightBone != null && _rightBone.transformIsAlive ) {
+							// _bone ... Head / _leftBone ... LeftEye / _rightBone ... RightEye
+							return (_leftBone.worldPosition + _rightBone.worldPosition) * 0.5f;
+						} else if( _bone != null && _bone.transformIsAlive ) {
+							Vector3 currentPosition = _bone.worldPosition;
+							// _bone ... Head / _bone.parentBone ... Neck
+							if( _bone.parentBone != null && _bone.parentBone.transformIsAlive && _bone.parentBone.boneType == BoneType.Neck ) {
+								Vector3 neckToHead = _bone._defaultPosition - _bone.parentBone._defaultPosition;
+								float neckToHeadY = (neckToHead.y > 0.0f) ? neckToHead.y : 0.0f;
+								Quaternion parentBaseRotation = (_bone.parentBone.worldRotation * _bone.parentBone._worldToBaseRotation);
+								Matrix3x3 parentBaseBasis;
+								SAFBIKMatSetRot( out parentBaseBasis, ref parentBaseRotation );
+								currentPosition += parentBaseBasis.column1 * neckToHeadY;
+								currentPosition += parentBaseBasis.column2 * neckToHeadY;
+							}
+							return currentPosition;
+						}
+					} else if( _isSimulateFingerTips ) {
 						if( _bone != null &&
 							_bone.parentBoneLocationBased != null &&
 							_bone.parentBoneLocationBased.transformIsAlive &&
@@ -411,9 +447,9 @@ namespace SA
 
 			public void WriteToTransform()
 			{
-				#if _FORCE_CANCEL_FEEDBACK_WORLDTRANSFORM
+#if _FORCE_CANCEL_FEEDBACK_WORLDTRANSFORM
 				// Nothing.
-				#else
+#else
 				if( _isWrittenWorldPosition ) {
 					_isWrittenWorldPosition = false; // Turn off _isWrittenWorldPosition
 					if( this.transformIsAlive ) {
@@ -426,7 +462,7 @@ namespace SA
 						this.transform.rotation = _worldRotation;
 					}
 				}
-				#endif
+#endif
 			}
 		}
 	}

@@ -1,6 +1,6 @@
 ﻿// Copyright (c) 2016 Nora
 // Released under the MIT license
-// http://opensource.org/licenses/mit-license.phpusing
+// http://opensource.org/licenses/mit-license.php
 
 #if SAFULLBODYIK_DEBUG
 //#define _FORCE_NO_LOCAL_IDENTITY
@@ -263,7 +263,7 @@ namespace SA
 				}
 
 				if( _boneType == BoneType.Eye ) {
-					if( fullBodyIK.settings.modelTemplate == ModelTemplate.UnityChan ) {
+					if( fullBodyIK._IsHiddenCustomEyes() ) {
 						_isWritebackWorldPosition = true;
 					}
 				}
@@ -327,22 +327,26 @@ namespace SA
 									}
 
 									if( fullBodyIK.internalValues.shoulderDirYAsNeck == -1 ) {
-										if( spineUBone != null && neckBone != null ) {
-											Vector3 shoulderToSpineU = shoulderBone._defaultLocalDirection;
-											Vector3 shoulderToNeck = neckBone._defaultPosition - shoulderBone._defaultPosition;
-											if( SAFBIKVecNormalize( ref shoulderToNeck ) ) {
-												float shoulderToSpineUTheta = Mathf.Abs( Vector3.Dot( dir, shoulderToSpineU ) );
-												float shoulderToNeckTheta = Mathf.Abs( Vector3.Dot( dir, shoulderToNeck ) );
-												if( shoulderToSpineUTheta < shoulderToNeckTheta ) {
-													fullBodyIK.internalValues.shoulderDirYAsNeck = 0;
+										if( fullBodyIK.settings.shoulderDirYAsNeck == AutomaticBool.Auto ) {
+											if( spineUBone != null && neckBone != null ) {
+												Vector3 shoulderToSpineU = shoulderBone._defaultLocalDirection;
+												Vector3 shoulderToNeck = neckBone._defaultPosition - shoulderBone._defaultPosition;
+												if( SAFBIKVecNormalize( ref shoulderToNeck ) ) {
+													float shoulderToSpineUTheta = Mathf.Abs( Vector3.Dot( dir, shoulderToSpineU ) );
+													float shoulderToNeckTheta = Mathf.Abs( Vector3.Dot( dir, shoulderToNeck ) );
+													if( shoulderToSpineUTheta < shoulderToNeckTheta ) {
+														fullBodyIK.internalValues.shoulderDirYAsNeck = 0;
+													} else {
+														fullBodyIK.internalValues.shoulderDirYAsNeck = 1;
+													}
 												} else {
-													fullBodyIK.internalValues.shoulderDirYAsNeck = 1;
+													fullBodyIK.internalValues.shoulderDirYAsNeck = 0;
 												}
 											} else {
 												fullBodyIK.internalValues.shoulderDirYAsNeck = 0;
 											}
 										} else {
-											fullBodyIK.internalValues.shoulderDirYAsNeck = 0;
+											fullBodyIK.internalValues.shoulderDirYAsNeck = (fullBodyIK.settings.shoulderDirYAsNeck != AutomaticBool.Disable) ? 1 : 0;
                                         }
 									}
 
@@ -485,6 +489,34 @@ namespace SA
 				set {
 					_isWrittenWorldRotation = true;
 					_worldRotation = value;
+				}
+			}
+			
+			public void forcefix_worldRotation()
+			{
+				if( this.transformIsAlive ) {
+					if( !_isReadWorldRotation ) {
+						_isReadWorldRotation = true;
+						_worldRotation = this.transform.rotation;
+					}
+					_isWrittenWorldRotation = true;
+
+					// Fix worldPosition
+					if( _parentBone != null && _parentBone.transformIsAlive ) {
+						Quaternion parentWorldRotation = _parentBone.worldRotation;
+
+						Matrix3x3 parentRotationBasis;
+						SAFBIKMatSetRotMultInv1( out parentRotationBasis, ref parentWorldRotation, ref this.parentBone._defaultRotation );
+
+						Vector3 parentWorldPosition = parentBone.worldPosition;
+
+						Vector3 tempPos;
+						SAFBIKMatMultVecPreSubAdd( out tempPos, ref parentRotationBasis, ref _defaultPosition, ref parentBone._defaultPosition, ref parentWorldPosition );
+
+						_isWrittenWorldPosition = true;
+						_isWritebackWorldPosition = true;
+						_worldPosition = tempPos;
+					}
 				}
 			}
 

@@ -1,6 +1,6 @@
 ﻿// Copyright (c) 2016 Nora
 // Released under the MIT license
-// http://opensource.org/licenses/mit-license.phpusing
+// http://opensource.org/licenses/mit-license.php
 
 #if SAFULLBODYIK_DEBUG // Currentry Debug Only
 #if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN
@@ -15,6 +15,14 @@ namespace SA
 {
 	public partial class FullBodyIK
 	{
+		[System.Serializable]
+		[StructLayout(LayoutKind.Sequential, Pack = 4)]
+		public struct Float2
+		{
+			[MarshalAs( UnmanagedType.ByValArray, SizeConst = 2 )]
+			public float[] v;
+		}
+
 		[System.Serializable]
 		[StructLayout(LayoutKind.Sequential, Pack = 4)]
 		public struct Matrix3x3
@@ -452,111 +460,136 @@ namespace SA
 		//--------------------------------------------------------------------------------------------------------------------
 
 #if SAFULLBODYIK_NATIVEPLUGIN
-		[DllImport( "SAFullBodyIKPlugin" )]
+		const string PluginName = "SAFullBodyIKPlugin";
+
+		[DllImport( PluginName )]
 		public static extern float SAFBIKSqrt( float a );
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern float SAFBIKSqrtClamp01( float a );
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern float SAFBIKSin( float a );
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern float SAFBIKCos( float a );
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern void  SAFBIKCosSin( out float cos, out float sin, float a );
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern float SAFBIKTan( float a );
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern float SAFBIKAcos( float cos );
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern float SAFBIKAsin( float sin );
 
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern void SAFBIKVecCross( out Vector3 ret, ref Vector3 lhs, ref Vector3 rhs );
 
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern float SAFBIKVecLength( ref Vector3 v );
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern float SAFBIKVecLengthAndLengthSq( out float lengthSq, ref Vector3 v );
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern float SAFBIKVecLength2( ref Vector3 lhs, ref Vector3 rhs );
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern float SAFBIKVecLengthSq2( ref Vector3 lhs, ref Vector3 rhs );
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern float SAFBIKVecLengthAndLengthSq2( out float lengthSq, ref Vector3 lhs, ref Vector3 rhs );
 
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern bool SAFBIKVecNormalize( ref Vector3 v );
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern bool SAFBIKVecNormalizeXZ( ref Vector3 v );
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern bool SAFBIKVecNormalizeYZ( ref Vector3 v );
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern bool SAFBIKVecNormalize2( ref Vector3 v0, ref Vector3 v1 );
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern bool SAFBIKVecNormalize3( ref Vector3 v0, ref Vector3 v1, ref Vector3 v2 );
+		[DllImport( PluginName )]
+		public static extern bool SAFBIKVecNormalize4( ref Vector3 v0, ref Vector3 v1, ref Vector3 v2, ref Vector3 v3 );
 
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern void SAFBIKMatMult( out Matrix3x3 ret, ref Matrix3x3 lhs, ref Matrix3x3 rhs );
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern void SAFBIKMatMultRet0( ref Matrix3x3 lhs, ref Matrix3x3 rhs );
 
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern void SAFBIKMatMultCol0( out Vector3 ret, ref Matrix3x3 lhs, ref Matrix3x3 rhs );
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern void SAFBIKMatMultCol1( out Vector3 ret, ref Matrix3x3 lhs, ref Matrix3x3 rhs );
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern void SAFBIKMatMultCol2( out Vector3 ret, ref Matrix3x3 lhs, ref Matrix3x3 rhs );
 
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern void SAFBIKMatMultVec( out Vector3 ret, ref Matrix3x3 mat, ref Vector3 vec );
 
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern void SAFBIKMatGetRot( out Quaternion quat, ref Matrix3x3 mat );
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern void SAFBIKMatSetRot( out Matrix3x3 mat, ref Quaternion quat );
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern void SAFBIKMatSetAxisAngle( out Matrix3x3 mat, ref Vector3 axis, float angle );
 
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern void SAFBIKMatFastLerp( out Matrix3x3 ret, ref Matrix3x3 lhs, ref Matrix3x3 rhs, float rate );
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern void SAFBIKMatFastLerpToIdentity( ref Matrix3x3 m, float rate );
 
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern void SAFBIKMatMultVecInv( out Vector3 ret, ref Matrix3x3 mat, ref Vector3 vec );
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern void SAFBIKMatMultVecAdd( out Vector3 ret, ref Matrix3x3 mat, ref Vector3 vec, ref Vector3 addVec );
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern void SAFBIKMatMultVecPreSub( out Vector3 ret, ref Matrix3x3 mat, ref Vector3 vec, ref Vector3 subVec );
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern void SAFBIKMatMultVecPreSubAdd( out Vector3 ret, ref Matrix3x3 mat, ref Vector3 vec, ref Vector3 subVec, ref Vector3 addVec );
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern void SAFBIKMatMultInv0( out Matrix3x3 ret, ref Matrix3x3 lhs, ref Matrix3x3 rhs );
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern void SAFBIKMatMultInv1( out Matrix3x3 ret, ref Matrix3x3 lhs, ref Matrix3x3 rhs );
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern void SAFBIKMatMultGetRot( out Quaternion ret, ref Matrix3x3 lhs, ref Matrix3x3 rhs );
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern void SAFBIKMatSetRotMult( out Matrix3x3 ret, ref Quaternion lhs, ref Quaternion rhs );
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern void SAFBIKMatSetRotMultInv1( out Matrix3x3 ret, ref Quaternion lhs, ref Quaternion rhs );
 
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
+		public static extern void SAFBIKQuatMult( out Quaternion ret, ref Quaternion q0, ref Quaternion q1 );
+		[DllImport( PluginName )]
+		public static extern void SAFBIKQuatMultInv0( out Quaternion ret, ref Quaternion q0, ref Quaternion q1 );
+		[DllImport( PluginName )]
+		public static extern void SAFBIKQuatMultNorm( out Quaternion ret, ref Quaternion q0, ref Quaternion q1 );
+		[DllImport( PluginName )]
+		public static extern void SAFBIKQuatMultNormInv0( out Quaternion ret, ref Quaternion q0, ref Quaternion q1 );
+		[DllImport( PluginName )]
+		public static extern void SAFBIKQuatMult3( out Quaternion ret, ref Quaternion q0, ref Quaternion q1, ref Quaternion q2 );
+		[DllImport( PluginName )]
+		public static extern void SAFBIKQuatMult3Inv0( out Quaternion ret, ref Quaternion q0, ref Quaternion q1, ref Quaternion q2 );
+		[DllImport( PluginName )]
+		public static extern void SAFBIKQuatMult3Inv1( out Quaternion ret, ref Quaternion q0, ref Quaternion q1, ref Quaternion q2 );
+		[DllImport( PluginName )]
+		public static extern void SAFBIKQuatMultNorm3( out Quaternion ret, ref Quaternion q0, ref Quaternion q1, ref Quaternion q2 );
+		[DllImport( PluginName )]
+		public static extern void SAFBIKQuatMultNorm3Inv0( out Quaternion ret, ref Quaternion q0, ref Quaternion q1, ref Quaternion q2 );
+		[DllImport( PluginName )]
+		public static extern void SAFBIKQuatMultNorm3Inv1( out Quaternion ret, ref Quaternion q0, ref Quaternion q1, ref Quaternion q2 );
+
+		[DllImport( PluginName )]
 		public static extern bool SAFBIKComputeBasisFromXZLockX( out Matrix3x3 basis, ref Vector3 dirX, ref Vector3 dirZ );
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern bool SAFBIKComputeBasisFromXYLockX( out Matrix3x3 basis, ref Vector3 dirX, ref Vector3 dirY );
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern bool SAFBIKComputeBasisFromXYLockY( out Matrix3x3 basis, ref Vector3 dirX, ref Vector3 dirY );
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern bool SAFBIKComputeBasisFromXZLockZ( out Matrix3x3 basis, ref Vector3 dirX, ref Vector3 dirZ );
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern bool SAFBIKComputeBasisFromYZLockY( out Matrix3x3 basis, ref Vector3 dirY, ref Vector3 dirZ );
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern bool SAFBIKComputeBasisFromYZLockZ( out Matrix3x3 basis, ref Vector3 dirY, ref Vector3 dirZ );
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern bool SAFBIKComputeBasisLockX( out Matrix3x3 basis, ref Vector3 dirX, ref Vector3 dirY, ref Vector3 dirZ );
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern bool SAFBIKComputeBasisLockY( out Matrix3x3 basis, ref Vector3 dirX, ref Vector3 dirY, ref Vector3 dirZ );
-		[DllImport( "SAFullBodyIKPlugin" )]
+		[DllImport( PluginName )]
 		public static extern bool SAFBIKComputeBasisLockZ( out Matrix3x3 basis, ref Vector3 dirX, ref Vector3 dirY, ref Vector3 dirZ );
 #else
 		public static float SAFBIKSqrt( float a )
@@ -774,6 +807,15 @@ namespace SA
 			return r0 && r1 && r2;
 		}
 
+		public static bool SAFBIKVecNormalize4( ref Vector3 v0, ref Vector3 v1, ref Vector3 v2, ref Vector3 v3 )
+		{
+			bool r0 = SAFBIKVecNormalize( ref v0 );
+			bool r1 = SAFBIKVecNormalize( ref v1 );
+			bool r2 = SAFBIKVecNormalize( ref v2 );
+			bool r3 = SAFBIKVecNormalize( ref v3 );
+			return r0 && r1 && r2 && r3;
+		}
+
 		public static void SAFBIKMatMult( out Matrix3x3 ret, ref Matrix3x3 lhs, ref Matrix3x3 rhs )
 		{
 			ret = new Matrix3x3(
@@ -922,6 +964,11 @@ namespace SA
 
 		public static void SAFBIKMatSetAxisAngle( out Matrix3x3 m, ref Vector3 axis, float cos )
 		{
+			if( cos >= -FLOAT_EPSILON && cos <= FLOAT_EPSILON ) {
+				m = Matrix3x3.identity;
+				return;
+			}
+
 			m = new Matrix3x3();
 
 			float sin = 1.0f - cos * cos;
@@ -1085,6 +1132,58 @@ namespace SA
 		{
 			Quaternion q = lhs * Inverse( rhs );
 			SAFBIKMatSetRot( out ret, ref q );
+		}
+
+		//--------------------------------------------------------------------------------------------------------------------
+
+		public static void SAFBIKQuatMult( out Quaternion ret, ref Quaternion q0, ref Quaternion q1 )
+		{
+			ret = q0 * q1;
+		}
+
+		public static void SAFBIKQuatMultInv0( out Quaternion ret, ref Quaternion q0, ref Quaternion q1 )
+		{
+			ret = Inverse( q0 ) * q1;
+		}
+
+		public static void SAFBIKQuatMultNorm( out Quaternion ret, ref Quaternion q0, ref Quaternion q1 )
+		{
+			ret = Normalize( q0 * q1 );
+		}
+
+		public static void SAFBIKQuatMultNormInv0( out Quaternion ret, ref Quaternion q0, ref Quaternion q1 )
+		{
+			ret = Normalize( Inverse( q0 ) * q1 );
+		}
+
+		public static void SAFBIKQuatMult3( out Quaternion ret, ref Quaternion q0, ref Quaternion q1, ref Quaternion q2 )
+		{
+			ret = q0 * q1 * q2;
+		}
+
+		public static void SAFBIKQuatMult3Inv0( out Quaternion ret, ref Quaternion q0, ref Quaternion q1, ref Quaternion q2 )
+		{
+			ret = Inverse( q0 ) * q1 * q2;
+		}
+
+		public static void SAFBIKQuatMult3Inv1( out Quaternion ret, ref Quaternion q0, ref Quaternion q1, ref Quaternion q2 )
+		{
+			ret = q0 * Inverse( q1 ) * q2;
+		}
+
+		public static void SAFBIKQuatMultNorm3( out Quaternion ret, ref Quaternion q0, ref Quaternion q1, ref Quaternion q2 )
+		{
+			ret = Normalize( q0 * q1 * q2 );
+		}
+
+		public static void SAFBIKQuatMultNorm3Inv0( out Quaternion ret, ref Quaternion q0, ref Quaternion q1, ref Quaternion q2 )
+		{
+			ret = Normalize( Inverse( q0 ) * q1 * q2 );
+		}
+
+		public static void SAFBIKQuatMultNorm3Inv1( out Quaternion ret, ref Quaternion q0, ref Quaternion q1, ref Quaternion q2 )
+		{
+			ret = Normalize( q0 * Inverse( q1 ) * q2 );
 		}
 
 		//--------------------------------------------------------------------------------------------------------------------
@@ -1657,6 +1756,45 @@ namespace SA
 			}
 		}
 
+		public struct CachedDeg2RadScaledValue
+		{
+			public float _a;
+			public float _b;
+			public float value;
+
+			public static readonly CachedDeg2RadScaledValue zero = new CachedDeg2RadScaledValue( 0.0f, 0.0f, 0.0f );
+
+			public CachedDeg2RadScaledValue( float a, float b )
+			{
+				_a = a;
+				_b = b;
+				value = a * b * Mathf.Deg2Rad;
+			}
+
+			public CachedDeg2RadScaledValue( float a, float b, float value_ )
+			{
+				_a = a;
+				_b = b;
+				value = value_;
+			}
+
+			public void Reset( float a, float b )
+			{
+				if( _a != a || _b != b ) {
+					_a = a;
+					_b = b;
+					value = a * b * Mathf.Deg2Rad;
+				}
+			}
+
+			public void _Reset( float a, float b )
+			{
+				_a = a;
+				_b = b;
+				value = a * b * Mathf.Deg2Rad;
+			}
+		}
+
 		//--------------------------------------------------------------------------------------------------------------------
 
 		public static bool SAFBIKComputeBasisFromXZLockX( out Matrix3x3 basis, Vector3 dirX, Vector3 dirZ )
@@ -1800,6 +1938,8 @@ namespace SA
 			out float theta,
 			out Vector3 axis )
 		{
+			CheckNormalized( dirFrom );
+			CheckNormalized( dirTo );
 			axis = Vector3.Cross( dirFrom, dirTo );
 			if( !SAFBIKVecNormalize( ref axis ) ) {
 				theta = 0.0f;
@@ -1909,6 +2049,46 @@ namespace SA
 						dir.x = -dir.x;
 						return true;
 					}
+				}
+			}
+
+			return false;
+		}
+
+		// Limited Square.
+		public static bool _LimitXZ_Square(
+			ref Vector3 dir,                // dirZ
+			float limitXMinus,               // X-
+			float limitXPlus,                // X+
+			float limitZMinus,               // Z-
+			float limitZPlus )               // Z+
+		{
+			bool isXLimited = false;
+			bool isZLimited = false;
+
+			if( dir.x < -limitXMinus ) {
+				dir.x = -limitXMinus;
+				isXLimited = true;
+			} else if( dir.x > limitXPlus ) {
+				dir.x = limitXPlus;
+				isXLimited = true;
+			}
+
+			if( dir.z < -limitZMinus ) {
+				dir.z = -limitZMinus;
+				isZLimited = true;
+			} else if( dir.z > limitZPlus ) {
+				dir.z = limitZPlus;
+				isZLimited = true;
+			}
+
+			if( isXLimited || isZLimited ) {
+				dir.y = SAFBIKSqrt( 1.0f - (dir.x * dir.x + dir.z * dir.z) );
+				return true;
+			} else {
+				if( dir.y < 0.0f ) {
+					dir.y = -dir.y;
+					return true;
 				}
 			}
 
@@ -2123,6 +2303,37 @@ namespace SA
 			}
 
 			dir = tmp;
+			return true;
+		}
+
+		public static bool _LimitToPlaneDirY( ref Vector3 dir, Vector3 planeDir, float thetaY )
+		{
+			float d = Vector3.Dot( dir, planeDir );
+			if( d <= IKEpsilon && d >= -IKEpsilon ) {
+				return false;
+			}
+
+			if( d <= thetaY && d >= -thetaY ) {
+				return true;
+			}
+
+			Vector3 tmp = dir - planeDir * d;
+			float tmpLen = SAFBIKVecLength( ref tmp );
+			if( tmpLen <= FLOAT_EPSILON ) {
+				return false;
+			}
+
+			float targetLen = SAFBIKSqrt( 1.0f - thetaY * thetaY );
+
+			tmp *= targetLen / tmpLen;
+
+			dir = tmp;
+			if( d >= 0.0f ) {
+				dir += planeDir * thetaY;
+			} else {
+				dir -= planeDir * thetaY;
+			}
+
 			return true;
 		}
 

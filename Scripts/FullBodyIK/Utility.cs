@@ -1,6 +1,6 @@
 ﻿// Copyright (c) 2016 Nora
 // Released under the MIT license
-// http://opensource.org/licenses/mit-license.phpusing
+// http://opensource.org/licenses/mit-license.php
 
 #if SAFULLBODYIK_DEBUG
 //#define SAFULLBODYIK_DEBUG_CHECKEVAL
@@ -97,6 +97,82 @@ namespace SA
 			}
 
 			return false;
+		}
+
+		//----------------------------------------------------------------------------------------------------------------
+
+		static Bone _PrepareBone( Bone bone )
+		{
+			return (bone != null && bone.transformIsAlive) ? bone : null;
+		}
+
+		static Bone[] _PrepareBones( Bone leftBone, Bone rightBone )
+		{
+			Assert( leftBone != null && rightBone != null );
+			if( leftBone != null && rightBone != null ) {
+				if( leftBone.transformIsAlive && rightBone.transformIsAlive ) {
+					var bones = new Bone[2];
+					bones[0] = leftBone;
+					bones[1] = rightBone;
+					return bones;
+				}
+			}
+
+			return null;
+		}
+
+		//----------------------------------------------------------------------------------------------------------------
+
+		static bool _ComputeEyesRange( ref Vector3 eyesDir, float rangeTheta )
+		{
+			if( rangeTheta >= -IKEpsilon ) { // range
+				if( eyesDir.z < 0.0f ) {
+					eyesDir.z = -eyesDir.z;
+                }
+
+				return true;
+			} else if( rangeTheta >= -1.0f + IKEpsilon ) {
+				float shiftZ = -rangeTheta;
+				eyesDir.z = (eyesDir.z + shiftZ);
+				if( eyesDir.z < 0.0f ) {
+					eyesDir.z *= 1.0f / (1.0f - shiftZ);
+				} else {
+					eyesDir.z *= 1.0f / (1.0f + shiftZ);
+				}
+
+				float xyLen = SAFBIKSqrt( eyesDir.x * eyesDir.x + eyesDir.y * eyesDir.y );
+				if( xyLen > FLOAT_EPSILON ) {
+					float xyLenTo = SAFBIKSqrt( 1.0f - eyesDir.z * eyesDir.z );
+					float xyLenScale = xyLenTo / xyLen;
+					eyesDir.x *= xyLenScale;
+					eyesDir.y *= xyLenScale;
+					return true;
+				} else {
+					eyesDir.x = 0.0f;
+					eyesDir.y = 0.0f;
+					eyesDir.z = 1.0f;
+					return false;
+				}
+			} else {
+				return true;
+			}
+		}
+
+		//----------------------------------------------------------------------------------------------------------------
+
+		public static string _GetAvatarName( Transform rootTransform )
+		{
+			if( rootTransform != null ) {
+				var animator = rootTransform.GetComponent<Animator>();
+				if( animator != null ) {
+					var avatar = animator.avatar;
+					if( avatar != null ) {
+						return avatar.name;
+					}
+				}
+			}
+
+			return null;
 		}
 
 		//----------------------------------------------------------------------------------------------------------------
